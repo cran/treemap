@@ -1,0 +1,50 @@
+\name{treemap-package}
+\alias{treemap-package}
+\alias{treemap}
+\docType{package}
+\title{Treemap visualization}
+\description{
+With this package, different kind of treemaps can be generated such as comparison treemaps and density treemaps. Further, it is possible to show small multiples.
+}
+\details{
+\tabular{ll}{
+Package: \tab treemap\cr
+Type: \tab Package\cr
+Version: \tab 0.9\cr
+Date: \tab 2010-09-08\cr
+License: \tab GPL version 3\cr
+LazyLoad: \tab no\cr
+}
+The function tmPlot is used to plot treemaps. All other functions are only used internally.
+}
+\author{
+Martijn Tennekes
+
+Maintainer: Martijn Tennekes <mtennekes@gmail.com>
+}
+\references{
+~~ Literature or other references for background information ~~
+}
+\keyword{ treemaps }
+\seealso{
+}
+\examples{
+	# fictive structural business statistics (sbs) data of 2008 and 2009
+	data(sbsData)
+	
+	# comparisson treemap
+	tmPlot(sbsData, index="section", subindex="subsection", vSize="employees09", vColor="employees08", sortID="-size")
+	
+	# four comparisson treemaps
+	tmPlot(sbsData, index="section", vSize="employees09+value added09+turnover09+salaries09", vColor="employees08+value added08+turnover08+salaries08", sortID="-size")
+
+	# density treemap
+tmPlot(sbsData,index="section", subindex ="subsection", vSize="turnover09",vColor="employees09/1000*turnover09", sortID="-size")
+
+tmPlot(sbsData,index="section", subindex ="subsection", vSize="employees09",vColor="turnover09/employees09", sortID="-size")
+
+	# linked treemaps
+	tmPlot(sbsData[sbsData$section=="Manufacturing",],index="subsection",
+vSize="income09+employees09+expenditures09+salaries09",vColor="", sortID="-size")
+	
+}
