@@ -1,28 +1,34 @@
-\name{sizeText}
-\alias{sizeText}
+\name{createRec}
+\alias{createRec}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-sizeText
+Creates graphical rectangle objects out of coordinates
 }
 \description{
-	Determines optimal text size.
+Creates graphical rectangle objects out of coordinates
 }
 \usage{
-sizeText(text, width, height, upperbound)
+createRec(recList, filled = TRUE, label = "", labelbg = FALSE, labellb = 0, lwd = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{text}{
-%%     ~~Describe \code{text} here~~
+  \item{recList}{
+%%     ~~Describe \code{recList} here~~
 }
-  \item{width}{
-%%     ~~Describe \code{width} here~~
+  \item{filled}{
+%%     ~~Describe \code{filled} here~~
 }
-  \item{height}{
-%%     ~~Describe \code{height} here~~
+  \item{label}{
+%%     ~~Describe \code{label} here~~
 }
-  \item{upperbound}{
-%%     ~~Describe \code{upperbound} here~~
+  \item{labelbg}{
+%%     ~~Describe \code{labelbg} here~~
+}
+  \item{labellb}{
+%%     ~~Describe \code{labellb} here~~
+}
+  \item{lwd}{
+%%     ~~Describe \code{lwd} here~~
 }
 }
 \details{

@@ -2,10 +2,10 @@
 \alias{fixed2col}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-fixed2col
+Creates colors for fixed treemaps
 }
 \description{
-	Creates colors for fixed treemaps.
+	Creates colors for fixed treemaps
 }
 \usage{
 fixed2col(dat)

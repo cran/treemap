@@ -2,28 +2,25 @@
 \alias{baseTreemap}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-baseTreemap
+	Plots a single treemap
 }
 \description{
-	Base function that plots a single treemap.
+	This function that plots a single treemap. It is used by the more user-friedly function \code{\link{tmPlot}}.
 }
 \usage{
-baseTreemap(indices, values, values2, subindices = NA, type = "fixed", width = convertWidth(unit(1, "npc"), "inches", valueOnly = TRUE), height = convertHeight(unit(1, "npc"), "inches", valueOnly = TRUE), neg = FALSE, sortDat = values, legenda = TRUE, upperboundText = 0.8, lowerboundText = 0.6, forcePrint = FALSE, sizeTitle = "", colorTitle = "")
+baseTreemap(dat, type = "fixed", width = convertWidth(unit(1, "npc"), "inches", valueOnly = TRUE), height = convertHeight(unit(1, "npc"), "inches", valueOnly = TRUE), neg = FALSE, legenda = TRUE, upperboundText = 0.8, lowerboundText = 0.4, forcePrint = FALSE, sizeTitle = "", colorTitle = "")
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{indices}{
-	vector of indices.
+  \item{dat}{
+	data frame containing the columns:
+	\itemize{
+	\item \code{values} numerical vector defining rectangle sizes
+	\item \code{values2} numerical vector defining rectangle colors
+	\item \code{sortInd} vector defining the order of the rectangles (from top left to bottom right)
+	\item \code{index1}...\code{index<k>} one or more vectors defining the aggregation indices
+	}
   }
-  \item{values}{
-	numerical vector defining rectangle sizes.
-  }
-  \item{values2}{
-	numerical vector defining rectangle colors.
-}
-  \item{subindices}{
-	vector of subindices (optional).
-}
   \item{type}{
 	the type of the treemap (optional):
 		\itemize{
@@ -42,9 +39,6 @@ baseTreemap(indices, values, values2, subindices = NA, type = "fixed", width = c
   \item{neg}{
 	boolean to determine whether color values are interpreted negatively (optional).
 }
-  \item{sortDat}{
-	vector defining the order of the rectangles (from top left to bottom right) (optional).
-  }
   \item{legenda}{
 	boolean, determines whether legenda should be plot (optional).
   }

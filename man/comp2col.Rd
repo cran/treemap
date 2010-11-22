@@ -2,10 +2,10 @@
 \alias{comp2col}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-comp2col
+	Creates colors and legenda for comparisson treemaps
 }
 \description{
-	Creates colors and legenda for comparisson treemaps.
+	Creates colors and legenda for comparisson treemaps
 }
 \usage{
 comp2col(dat, upperboundText, showScale, neg)

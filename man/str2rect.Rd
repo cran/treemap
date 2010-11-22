@@ -1,28 +1,31 @@
-\name{layoutText}
-\alias{layoutText}
+\name{str2rect}
+\alias{str2rect}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-layoutText
+Places text in rectangles
 }
 \description{
-	Determines the optimal text layout in terms of number of lines.
+Places text in rectangles
 }
 \usage{
-layoutText(text, width, height, upperbound)
+str2rect(grb, fontcol = "black", fill = NA, bold = FALSE, enlargable = FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{text}{
-%%     ~~Describe \code{text} here~~
+  \item{grb}{
+	rectGrob object defining the rectangle(s), where \code{grb$name} is the text to display
 }
-  \item{width}{
-%%     ~~Describe \code{width} here~~
+  \item{fontcol}{
+		vector defining the colors of the text
 }
-  \item{height}{
-%%     ~~Describe \code{height} here~~
+  \item{fill}{
+		vector defining the backgroud colors of the text
 }
-  \item{upperbound}{
-%%     ~~Describe \code{upperbound} here~~
+  \item{bold}{
+		logical defining whe the text is bold
+}
+  \item{enlargable}{
+		logical defining whether the textsize may exceed \code{cex=1}
 }
 }
 \details{

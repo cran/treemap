@@ -10,12 +10,12 @@ With this package, different kind of treemaps can be generated such as compariso
 \tabular{ll}{
 Package: \tab treemap\cr
 Type: \tab Package\cr
-Version: \tab 0.9\cr
-Date: \tab 2010-09-08\cr
+Version: \tab 0.91\cr
+Date: \tab 2010-11-22\cr
 License: \tab GPL version 3\cr
-LazyLoad: \tab no\cr
+LazyLoad: \tab yes\cr
 }
-The function tmPlot is used to plot treemaps. All other functions are only used internally.
+The function \code{\link{tmPlot}} is used to plot treemaps. The functions \code{\link{tmClick}} and \code{\link{tmLocate}} are used to respectively capture a mouse click on a treemap and locate the corresponding object. The other functions are only used internally.
 }
 \author{
 Martijn Tennekes
@@ -33,18 +33,18 @@ Maintainer: Martijn Tennekes <mtennekes@gmail.com>
 	data(sbsData)
 	
 	# comparisson treemap
-	tmPlot(sbsData, index="section", subindex="subsection", vSize="employees09", vColor="employees08", sortID="-size")
-	
+	tmPlot(sbsData, index=c("section", "subsection"), vSize="employees09", vColor="employees08", sortID="-size")
+	\dontrun{
 	# four comparisson treemaps
 	tmPlot(sbsData, index="section", vSize="employees09+value added09+turnover09+salaries09", vColor="employees08+value added08+turnover08+salaries08", sortID="-size")
 
 	# density treemap
-tmPlot(sbsData,index="section", subindex ="subsection", vSize="turnover09",vColor="employees09/1000*turnover09", sortID="-size")
+tmPlot(sbsData,index=c("section", "subsection"), vSize="turnover09",vColor="employees09/1000*turnover09", sortID="-size")
 
-tmPlot(sbsData,index="section", subindex ="subsection", vSize="employees09",vColor="turnover09/employees09", sortID="-size")
+	tmPlot(sbsData,index=c("section", "subsection"), vSize="employees09",vColor="turnover09/employees09", sortID="-size")
 
 	# linked treemaps
 	tmPlot(sbsData[sbsData$section=="Manufacturing",],index="subsection",
 vSize="income09+employees09+expenditures09+salaries09",vColor="", sortID="-size")
-	
+	}
 }

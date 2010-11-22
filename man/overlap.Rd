@@ -1,31 +1,22 @@
-\name{writeText}
-\alias{writeText}
+\name{overlap}
+\alias{overlap}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-writeText
+Checks whether rectangles overlap 
 }
 \description{
-	Write text in rectangles.
+Determines whether one group of rectangles is overlapped by another group of rectangles
 }
 \usage{
-writeText(recList, lowerbound, upperbound, background, forcePrint)
+overlap(rec1, rec2)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{recList}{
-%%     ~~Describe \code{recList} here~~
+  \item{rec1}{
+%%     ~~Describe \code{rec1} here~~
 }
-  \item{lowerbound}{
-%%     ~~Describe \code{lowerbound} here~~
-}
-  \item{upperbound}{
-%%     ~~Describe \code{upperbound} here~~
-}
-  \item{background}{
-%%     ~~Describe \code{background} here~~
-}
-  \item{forcePrint}{
-%%     ~~Describe \code{forcePrint} here~~
+  \item{rec2}{
+%%     ~~Describe \code{rec2} here~~
 }
 }
 \details{

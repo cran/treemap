@@ -1,14 +1,12 @@
 baseTreemap <-
-function(indices, values, values2, 
-	subindices=NA,
+function(dat,
 	type="fixed",
 	width=convertWidth(unit(1,"npc"),"inches",valueOnly = TRUE),
 	height=convertHeight(unit(1,"npc"),"inches",valueOnly = TRUE),
 	neg=FALSE,
-	sortDat=values,
 	legenda=TRUE,
 	upperboundText=0.8, 
-	lowerboundText=0.6, 
+	lowerboundText=0.4, 
 	forcePrint=FALSE,
 	sizeTitle="", 
 	colorTitle="") {
@@ -18,7 +16,7 @@ function(indices, values, values2,
 	cexLarge <- min(14,(height*3.6), (width*3.6))
 	cexSmall <- cexLarge * 0.8
 
-	
+	# Determine legenda viewports
 	if (legenda) {
 		legWidth <- min(unit(5, "inches"), convertWidth(unit(0.9, "npc")-2*plotMargin,"inches"))
 		legHeight <- unit(cexSmall * 0.06, "inches")
@@ -40,6 +38,7 @@ function(indices, values, values2,
 		  just = c("left", "bottom"))
 	} else legHeight <- unit(0,"inches")
 
+	# Determine treemap viewports
 	vpDat <- viewport(name = "dataregion", 
 	  x = plotMargin,
 	  y = legHeight + 0.5*plotMargin,
@@ -56,38 +55,43 @@ function(indices, values, values2,
 	  gp=gpar(fontsize=cexSmall),
 	  just = c("left", "bottom"))
 	
-	# CREATE DATA FRAME (LOW LEVEL)
-	dat <- data.frame(index=indices,value=values,value2=values2, sort=sortDat, subindex=subindices)
-	dat$color <- rep(NA,nrow(dat))
-	names(dat) <- c("index", "value", "value2", "sort", "subindex", "color")
-
+	
+	#determine depth
 	dat <- dat[dat$value>0,]
-	
-	sortID <- sort(dat$sort,decreasing=FALSE,index.return=TRUE)$ix
-	dat <- dat[sortID,]
-	
+	depth <- sum(substr(colnames(dat),1,5)=="index")
 
-	# CREATE DATA FRAME (AGGREGATED LEVEL)
-	if (type=="dens") {
-		dat$temp <- dat$value * dat$value2
+	dat$dlevel <- apply(dat[paste("index", 1:depth, sep="")], MARGIN=1, FUN=function(x, d){d-pmax(sum(is.na(x)), sum(x=="", na.rm=TRUE))}, depth)
 
-		dat2 <- aggregate(x=data.frame(dat$value,dat$temp, dat$sort), by=list(dat$index), FUN="sum")
-		dat2$dat.temp <- dat2$dat.temp / dat2$dat.value
-		dat$temp <- NULL
-	} else {
-		dat2 <- aggregate(x=data.frame(dat$value,dat$value2, dat$sort), by=list(dat$index),FUN="sum")
+	
+	dats <- list()
+
+	datV <- data.frame(value=numeric(0), value2=numeric(0))
+	for (i in 1:depth) {
+		indexList <- paste("index", 1:i, sep="")
+		if (type=="dens") {
+			dat$value2abs <- dat$value * dat$value2
+			value <- NULL; rm(value)
+			value2abs <- NULL; rm(value2abs)
+			sortInd <- NULL; rm(sortInd)
+			dats[[i]] <- ddply(dat, indexList, colwise(sum, .(value, value2abs, sortInd)))
+			
+			dats[[i]]$value2 <- dats[[i]]$value2abs / dats[[i]]$value
+			dats[[i]]$value2abs <- NULL
+			dats[[i]]$value2abs <- NULL
+		} else {
+			value <- NULL; rm(value)
+			value2 <- NULL; rm(value2)
+			sortInd <- NULL; rm(sortInd)
+			dats[[i]] <- ddply(dat, indexList, colwise(sum, .(value, value2, sortInd)))
+		}
+		dats[[i]] <- unique(merge(dats[[i]], dat[c(indexList, "dlevel")], by=indexList))
+		dats[[i]]$clevel <- i
+		dats[[i]] <- dats[[i]][order(dats[[i]]$sortInd),]
+		datV <- rbind(datV, dats[[i]][c("value", "value2", "index1")])
 	}
-	names(dat2) <- c("index","value","value2", "sort")
-	dat2$subindex <- rep(NA,nrow(dat2))
-	dat2$color <- rep(NA,nrow(dat2))
-	sortID <- sort(dat2$sort,decreasing=FALSE,index.return=TRUE)$ix
-	dat2 <- dat2[sortID,]
-
-
-	if (nrow(dat)==nrow(dat2)) {
-		hierar <- FALSE; dat12 <- dat
-	} else {hierar <- TRUE; dat12 <- rbind(dat,dat2)}
 	
+
+	# Show legenda and determine colors
 	if (legenda) {	
 		pushViewport(vpLeg)
 #		grid.rect()
@@ -97,74 +101,121 @@ function(indices, values, values2,
 	}
 	
 	if (type == "comp") {
-		dat12$color <- comp2col(dat12, upperboundText, TRUE, neg)
+		datV$color <- comp2col(datV, upperboundText, legenda, neg)
 	} else if (type == "perc") {
-		dat12$color <- fill2col(dat12, upperboundText, TRUE, neg)
+		datV$color <- fill2col(datV, upperboundText, legenda, neg)
 	} else if (type == "dens") {
-		dat12$color <- dens2col(dat12, upperboundText, TRUE, neg)
+		datV$color <- dens2col(datV, upperboundText, legenda, neg)
 	} else if (type == "linked") {
-		dat12$color <- fixed2col(dat12)
+		datV$color <- fixed2col(datV)
 	}
 	if (legenda) {	
-		popViewport()
-		popViewport()
+		upViewport()
+		upViewport()
 	}
-
-	dat <- dat12[1:nrow(dat),]
-	if (hierar) dat2 <- dat12[(nrow(dat)+1):nrow(dat12),]
-
+	
+	datL <- sapply(dats, FUN=nrow)
+	datL1 <- cumsum(c(1, datL[-depth]))
+	datL2 <- (datL1 + datL) - 1
+	for (i in 1:depth) {
+		dats[[i]]$color <- datV[datL1[i]:datL2[i],"color"]
+	}
+	
+	
 	pushViewport(vpDat)
-#	grid.rect()
+
 	grid.text(sizeTitle, y = unit(1, "npc") - unit(0.5, "lines"))
 	pushViewport(vpDat2)
-#	grid.rect()
 	grid.rect(name="TMrect")
 		
+	# Determine window size
 	dataRec <- list(X0=0,Y0=0,
 		W=convertWidth(unit(1, "grobwidth", "TMrect"),"inches",valueOnly=TRUE),
 		H=convertHeight(unit(1, "grobheight", "TMrect"),"inches",valueOnly=TRUE))
 	
-	if (hierar) {
-		recList <- pivotSize(dat2,dataRec)
-		
-		recList$x0 <- recList$x0 / dataRec$W
-		recList$y0 <- recList$y0 / dataRec$H
-		recList$w <- recList$w / dataRec$W
-		recList$h <- recList$h / dataRec$H
 	
-		recList2 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0), 
-			color=character(0))
-		for (i in 1:nrow(recList)) {
-			smallRec <- recList[i,2:5]
-			ind <- recList[i,]$ind
-			dat3 <- dat[dat$index==ind,]
-			sortID <- sort(dat3$sort,decreasing=FALSE,index.return=TRUE)$ix
-			dat3 <- dat3[sortID,]
-			recList2 <- rbind(recList2, pivotSize(dat3,smallRec))
-		}
+	findRecs <- function(dat2, level, rec, dats) {
+		recDat <- pivotSize(dat2, rec)
+		#recDat$level <- level
+		tempDat <- dat2[c(1,(ncol(dat2)-2):ncol(dat2))]
+		names(tempDat) <- c("ind" , "dlevel", "clevel", "color")
+		recDat <- merge(tempDat, recDat, by="ind")
 		
-		if (sum(!is.na(dat$subindex))!=0) {
-			drawRecGrid(recList2, dat, lwd = 1)
-			drawRecTrans(recList)
-			writeText(recList, upperbound = upperboundText, lowerbound = lowerboundText, background = TRUE, forcePrint = FALSE)
-		} else {
-			drawRecGrid(recList2, dat, lwd = 1)
-			writeText(recList2, upperbound = upperboundText, lowerbound = lowerboundText, background = FALSE, forcePrint = FALSE)
-		}
-	} else {
-		
-		
-		recList2 <- pivotSize(dat,dataRec)
-		recList2$x0 <- recList2$x0 / dataRec$W
-		recList2$y0 <- recList2$y0 / dataRec$H
-		recList2$w <- recList2$w / dataRec$W
-		recList2$h <- recList2$h / dataRec$H
-
-		drawRecGrid(recList2, dat, lwd = 1)
-		writeText(recList2, upperbound = upperboundText, lowerbound = lowerboundText, background = FALSE, forcePrint = FALSE)
+		recSel <- recDat[recDat$dlevel > recDat$clevel,]
+	
+		n <- nrow(recSel)
+		if (n!=0) {for (i in 1:n) {
+			smallRec <- recSel[i, c("x0", "y0", "w", "h")]
+			datSel <- dats[[level+1]][dats[[level+1]][paste("index", level, sep="")]==as.character(recSel[i,"ind"]),c(paste("index", level+1, sep=""),"value", "value2", "dlevel", "clevel", "color")]
+			recDat <- rbind(recDat, findRecs(datSel, level+1, smallRec, dats))
+		}}
+		return(recDat)
 	}
-	popViewport()
-	popViewport()
-	return(list(list(vpDat=vpDat,vpDat2=vpDat2),recList2))
+	
+	recList <- findRecs(dats[[1]], 1, dataRec, dats)
+	
+#browser()
+
+	# convert to npc (0 to 1)
+	recList$x0 <- recList$x0 / dataRec$W
+	recList$y0 <- recList$y0 / dataRec$H
+	recList$w <- recList$w / dataRec$W
+	recList$h <- recList$h / dataRec$H
+	
+	drawRecs <- function(recs) {
+		if (!is.na(recs$recs)[1]) grid.draw(recs$recs)
+		if (!is.na(recs$txtbg)[1]) grid.draw(recs$txtbg)
+		if (!is.na(recs$txt)[1]) grid.draw(recs$txt)
+	}
+
+	if (depth==1) {
+		whichFill <- rep(TRUE, nrow(recList))
+		recs_fill <- createRec(recList, filled=TRUE, label="normal", labellb=lowerboundText, lwd = 1)
+		grid.draw(recs_fill$recs)
+		grid.draw(recs_fill$txt)
+	} else {
+		whichBold <- recList$clevel==1
+		lwds <- depth - recList$clevel + 1
+		whichFill <- recList$clevel==recList$dlevel
+		
+		recs_fill_bold <- createRec(recList[whichFill & whichBold,], filled=TRUE, label="bold", labellb=lowerboundText, lwd = lwds[whichFill & whichBold])
+		recs_fill_norm <- createRec(recList[whichFill & !whichBold,], filled=TRUE, label="normal", labellb=lowerboundText, lwd = lwds[whichFill & !whichBold])
+		
+		recs_trans_bold <- createRec(recList[!whichFill & whichBold,], filled=FALSE, label="bold", labellb=lowerboundText, labelbg = TRUE, lwd = lwds[!whichFill & whichBold]) 
+		recs_trans_norm <- createRec(recList[!whichFill & !whichBold,], filled=FALSE, label="normal", labellb=lowerboundText, lwd = lwds[!whichFill & !whichBold]) 
+		
+		cover <- overlap(recs_fill_norm$txtbg, recs_trans_norm$txtbg)
+		if (!is.na(cover[1])) {
+			recs_fill_norm$txt$gp$col[cover] <- NA
+			recs_fill_norm$bg$gp$fill[cover] <- NA
+		}
+		cover <- overlap(recs_fill_norm$txtbg, recs_trans_bold$txtbg)
+		if (!is.na(cover[1])) {
+			recs_fill_norm$txt$gp$col[cover] <- NA
+			recs_fill_norm$bg$gp$fill[cover] <- NA
+		}
+		cover <- overlap(recs_fill_bold$txtbg, recs_trans_bold$txtbg)
+		if (!is.na(cover[1])) {
+			recs_fill_bold$txt$gp$col[cover] <- NA
+			recs_fill_bold$bg$gp$fill[cover] <- NA
+		}
+	
+		drawRecs(recs_fill_norm)
+		drawRecs(recs_fill_bold)
+		drawRecs(recs_trans_norm)
+		drawRecs(recs_trans_bold)
+		
+	}
+		
+		#lowMerge <- merge(dat, recList_low, by.x="subindex", by.y="ind")
+		#highMerge <- merge(dat, recList_high_fill, by.x="index", by.y="ind")
+		#resultDat <- rbind(highMerge,lowMerge)[,c("index", "subindex", "x0", "y0", "w",		"h")]
+		
+		resultDat <- recList[whichFill, c("ind", "clevel", "x0", "y0", "w", "h")]
+		
+
+	upViewport()
+	upViewport()
+	return(resultDat)
 }
 

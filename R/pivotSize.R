@@ -1,7 +1,7 @@
 pivotSize <-
 function(dat, rec){
 	names(rec)=c("X0","Y0", "W", "H")
-
+	# determine whether layout is horizontal or vertical
 	if (rec$W<rec$H) {
 		flip <- TRUE
 		tmp <- rec$H
@@ -11,6 +11,7 @@ function(dat, rec){
 		flip <- FALSE
 	}
 
+	# determine maximum value
 	maxV <- max(dat$value)	
 	maxI <- which(dat$value==maxV)[1]
 
@@ -62,12 +63,12 @@ function(dat, rec){
 	}
 	y0 <- rec$Y0+rec$H-h
 	
-	recList <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0), color=character(0))
+	recList <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0))
 	
 	if (flip) {
-		recList <- rbind(recList,data.frame(ind=dat[maxI,]$index,x0=rec$X0,y0=rec$Y0+rec$W-x0+rec$X0-w,w=h,h=w,color=dat[maxI,]$color))
+		recList <- rbind(recList,data.frame(ind=dat[maxI,]$index,x0=rec$X0,y0=rec$Y0+rec$W-x0+rec$X0-w,w=h,h=w))
 	} else {
-		recList <- rbind(recList,data.frame(ind=dat[maxI,]$index,x0=x0,y0=y0,w=w,h=h,color=dat[maxI,]$color))
+		recList <- rbind(recList,data.frame(ind=dat[maxI,]$index,x0=x0,y0=y0,w=w,h=h))
 	}
 	
 	if (nrow(list1)>0) {
@@ -77,7 +78,7 @@ function(dat, rec){
 			recList1 <- pivotSize(list1, list(rec$X0,rec$Y0,x0-rec$X0,rec$H))
 		}
 	} else {
-		recList1 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0), color=character(0))
+		recList1 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0))
 	}
 	recList <- rbind(recList,recList1)
 
@@ -88,7 +89,7 @@ function(dat, rec){
 			recList2 <- pivotSize(list2, list(x0,rec$Y0,w,rec$H-h)) 	
 		}
 	} else {
-		recList2 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0), color=character(0))
+		recList2 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0))
 	}
 	recList <- rbind(recList,recList2)
 
@@ -99,7 +100,7 @@ function(dat, rec){
 			recList3 <- pivotSize(list3, list(x0+w,rec$Y0,rec$W-(x0-rec$X0)-w,rec$H)) 	
 		}
 	} else {
-		recList3 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0), color=character(0))
+		recList3 <- data.frame(ind=integer(0), x0=numeric(0), y0=numeric(0), w=numeric(0), h=numeric(0))
 	}
 	recList <- rbind(recList,recList3)
 	

@@ -1,44 +1,93 @@
 tmPlot <-
-function(df, 
+function(dtf, 
 	index, 
-	subindex=NA,
 	vSize, 
 	vColor="", 
 	sortID="",
 	type="auto",
 	titles=NA,
-	subtitles=NA) {
-
+	subtitles=NA,
+	saveTm=FALSE) {
 	#############
 	## Process variable names and titles
 	#############
-	
 	## First checks
-	if (!exists("df")) stop("Dataframe <df> not defined")
+	if (!exists("dtf")) stop("Dataframe <dtf> not defined")
 	if (!exists("index")) stop("Attribute <index> not defined")
 	if (!exists("vSize")) stop("Attribute <vSize> not defined")
-	if (class(df)!="data.frame") stop("Object <df> is not a data.frame")
-	if (!index %in% names(df)) stop("<index> is not a column name of <df>")
+	if (class(dtf)!="data.frame") stop("Object <dtf> is not a data.frame")
+	if (any(!index %in% names(dtf))) stop("<index> is not a column name of <dtf>")
 
 
+	#############
+	## Internal functions
+	#############
+	formatTitle <- function(x) {
+
+			isnumeric <- function(s) !is.na(as.numeric(s))
+			
+			s <- strsplit(x, " ")[[1]]
+			string <- paste(toupper(substring(s, 1,1)), substring(s, 2),
+			  sep="", collapse=" ")
+
+			if (isnumeric(substring(string,nchar(string)-1,nchar(string)))&&
+			!isnumeric(substring(string,nchar(string)-2,nchar(string)))) {
+			string <- paste(substring(string,1,nchar(string)-2)," '",substring(string,nchar(string)-1,nchar(string)),sep="")
+		} else if (isnumeric(substring(string,nchar(string)-3,nchar(string)))&&
+			!isnumeric(substring(string,nchar(string)-4,nchar(string)))) {
+			string <- paste(substring(string,1,nchar(string)-4),substring(string,nchar(string)-3,nchar(string)),sep=" ")
+		}
+		string	
+	}
+	
+	formatColorTitle <- function(sx,x,sdiv,div) {
+		string <- formatTitle(x)
+		if (sx!=1) {	
+			string<-paste(sx,string,sep=" ")
+		}
+		if (!is.na(div)) {
+			stringDiv <- formatTitle(div)
+			if (sdiv!=1) {
+				stringDiv<-paste(sdiv,stringDiv,sep=" ")
+			}
+			string<-paste(string,"per",stringDiv,sep=" ")
+		}
+		string
+	}
+	
+	vColorDivSplit <- function(vColor) {
+		vColorDiv <- unlist(strsplit(vColor, split="/", fixed=TRUE))
+		return (vColorDiv)
+	}
+	
+	vColorMplySplit <- function(vColor) {
+		vColorMply <- unlist(strsplit(vColor, split="*", fixed=TRUE))
+		if (length(vColorMply)==1) {
+			vColorMply <- c(1,vColorMply)
+		}
+		return (vColorMply)
+	}
+
+
+	
 	## Get size variable(s)
 	vSizeVector <- unlist(strsplit(vSize, split="+", fixed=TRUE))
 	n <- length(vSizeVector)
 
 	## Checks if all vSizes are valid
 	for (i in 1:n) {
-		if (!vSizeVector[i] %in% names(df)) stop(paste(vSizeVector[i]," is not a column in <df>", sep=""))
-		if (class(df[,vSizeVector[i]])!="numeric" && class(df[,vSizeVector[i]])!="integer") stop(paste("Column ", vSizeVector[i], " is not numeric or integer",sep=""))
-		if (any(is.na(df[,vSizeVector[i]]))) stop(paste("Column ", vSizeVector[i], " contains missing values.",sep=""))
-		if (min(df[,vSizeVector[i]])<0) stop(paste("Column ", vSizeVector[i], " contains negative values.",sep=""))
+		if (!vSizeVector[i] %in% names(dtf)) stop(paste(vSizeVector[i]," is not a column in <dtf>", sep=""))
+		if (class(dtf[,vSizeVector[i]])!="numeric" && class(dtf[,vSizeVector[i]])!="integer") stop(paste("Column ", vSizeVector[i], " is not numeric or integer",sep=""))
+		if (any(is.na(dtf[,vSizeVector[i]]))) stop(paste("Column ", vSizeVector[i], " contains missing values.",sep=""))
+		if (min(dtf[,vSizeVector[i]])<0) stop(paste("Column ", vSizeVector[i], " contains negative values.",sep=""))
 	}
 
 	## Checks if titles and subtitles have length n
-	if (!is.na(titles) && length(titles) != n) {warning(paste("Number of titles should be ", n, ". Titles will be ignored.", sep="")); titles <- NA}
-	if (!is.na(subtitles) && length(subtitles) != n) {warning(paste("Number of subtitles should be ", n, ". Subtitles will be ignored.", sep="")); titles <- NA}
+	if (!is.na(titles[1]) && length(titles) != n) {warning(paste("Number of titles should be ", n, ". Titles will be ignored.", sep="")); titles <- NA}
+	if (!is.na(subtitles[1]) && length(subtitles) != n) {warning(paste("Number of subtitles should be ", n, ". Subtitles will be ignored.", sep="")); titles <- NA}
 		
 	## Determine titles
-	if (is.na(titles)) {	
+	if (is.na(titles[1])) {	
 		options(warn=-1) 
 		vSizeNames <- mapply(FUN="formatTitle", vSizeVector)
 		options(warn=0) 
@@ -129,12 +178,12 @@ function(df,
 		} else if (!all(is.na(vColorVectorBy))) {
 			type <- "dens"
 		} else {
-			perc <- ((df[vSizeVector] - df[vColorVector[2,]] )/df[vColorVector[2,]])*100
+			perc <- ((dtf[vSizeVector] - dtf[vColorVector[2,]] )/dtf[vColorVector[2,]])*100
 			isNaN <- apply(perc, 2, FUN=is.nan)
 			perc[isNaN] <- 0
 			
 			if (min(perc)<=-60|| max(perc)>=150) {
-				if (min(df[vSizeVector])>=0 && max(df[vSizeVector])<=100) {
+				if (min(dtf[vSizeVector])>=0 && max(dtf[vSizeVector])<=100) {
 					type <- "perc"	
 				} else type <- "dens"
 			} else type <- "comp"
@@ -148,13 +197,21 @@ function(df,
 	## Agggregate data
 	###########
 	
-	if (is.na(subindex)) {
-		varNames <- as.character(na.omit(unique(c(vSizeVector, vColorVector[2,]))))
+	# varNames <- as.character(na.omit(unique(c(vSizeVector, vColorVector[2,]))))
+	
 
-		df <-aggregate(x=df[varNames], by=list(df[,index]), FUN="sum", na.rm = TRUE)
-		names(df) <- c(index, names(df)[-1])
-		tempSubindices <- NA 
-	} else tempSubindices <- df[subindex]
+	# dtf <- ddply(dtf, index, colwise(sum, varNames))
+	
+	
+	
+	
+	# if (is.na(subindex)) {
+		# varNames <- as.character(na.omit(unique(c(vSizeVector, vColorVector[2,]))))
+
+		# dtf <-aggregate(x=dtf[varNames], by=list(dtf[,index]), FUN="sum", na.rm = TRUE)
+		# names(dtf) <- c(index, names(dtf)[-1])
+		# tempSubindices <- NA 
+	# } else tempSubindices <- dtf[subindex]
 
 	
 	############
@@ -162,74 +219,70 @@ function(df,
 	############
 
 	
-	pushViewport(viewport(layout=grid.layout(nRow, nCol)))
+	pushViewport(viewport(name="grid",layout=grid.layout(nRow, nCol)))
 
 
 	iCol<-1
 	iRow<-1
 	tm<-list()
 	for (i in 1:n) {
-		datSize<-df[vSizeVector[i]]
+		datSize<-as.numeric(dtf[[vSizeVector[i]]])
 		if (all(is.na(vColorVector))) { 
-			datColor<-df[vSizeVector[1]]
+			datColor<-dtf[[vSizeVector[1]]]
 		} else {
-			datColor<-df[vColorVector[2,i]]/as.numeric(vColorVector[1,i])
+			datColor<-dtf[[vColorVector[2,i]]]/as.numeric(vColorVector[1,i])
 			if (!is.na(vColorVectorBy[i])) {
-				datColor<-datColor/(df[vColorVectorBy[2,i]]/as.numeric(vColorVectorBy[1,i]))
+				datColor<-datColor/(dtf[[vColorVectorBy[2,i]]]/as.numeric(vColorVectorBy[1,i]))
 			}
 		}
-		pushViewport(viewport(layout.pos.col=iCol, layout.pos.row=iRow))
-		
+		pushViewport(viewport(name=paste("tm",i,sep=""),layout.pos.col=iCol, layout.pos.row=iRow))
+#		grid.rect(gp=gpar(col="red"))
 		if (sortID=="size") {
 			sortDat <- datSize
 		} else if (sortID=="color") {
 			sortDat <- datColor
 		} else if (sortID=="") {
-			sortDat <- 1:nrow(datSize)
-			ascending <- FALSE
+			sortDat <- datSize #NA
 		} else {
-			sortDat <- df[sortID]
+			sortDat <- dtf[sortID]
 		}
 		if (!ascending) {
 			sortDat <- -sortDat
 		}
+		dat<-data.frame(value=datSize, value2=datColor, sortInd=sortDat)
+		names(dat) <- c("value", "value2", "sortInd")
+		for (j in 1:length(index)) {
+			indName <- paste("index", j, sep="")
+			dat[[indName]] <- dtf[[index[j]]]
+		}		
 
-		
 		tm[[i]] <- baseTreemap(
-			indices=df[index],
-			values=datSize,
-			values2=datColor,
-			subindices=tempSubindices,
+			dat=dat,
 			type=type,
-			sortDat=sortDat,
 			legenda=legenda,
 			sizeTitle=vSizeNames[i],
 			colorTitle=vColorNames[i])
 			
-			
-		popViewport()
+		upViewport()
 		iRow<-iRow+1
 		if (iRow>nRow) {
 			iRow<-1
 			iCol<-iCol+1
 		}	
 	}
-	# for (i in 1:2) {
-		# click.locn <- grid.locator("npc")
-		# print(click.locn)
-		# click.row <- nRow - as.numeric(click.locn$y) %/% (1/nRow)
-		# click.col <- 1 + as.numeric(click.locn$x) %/% (1/nCol)
-		# cat(click.row, " ", click.col, "\n")
-		# pushViewport(viewport(layout.pos.col=click.col, layout.pos.row=click.row))
-		# grid.rect()
-		
-		# index <- click.row + (click.col - 1) * nRow
-		# cat("index", index)
-		# vpDat <- tm[[index]][[1]]$vpDat
-		# grid.rect()
-		# upViewport(n=2)
-		# popViewport()
-	# }
-	# current.vpTree()
+	
+	# go to root viewport (from grid layout)
+	upViewport()
+
+	# save treemaps (indices, subindices, and coordinates), and number of rows and number of columns)
+	if (saveTm) {
+		tmSave <- list()
+		tmSave$tm <- tm
+		tmSave$nRow <- nRow
+		tmSave$nCol <- nCol
+		return(tmSave)
+	} else{
+		return()
+	}
 }
 

@@ -1,23 +1,25 @@
-\name{vColorDivSplit}
-\alias{vColorDivSplit}
+\name{tmClick}
+\alias{tmClick}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-	vColorDivSplit
+Mouse capture
 }
 \description{
-	Splits string of color column names at "/".
+Captures a mouse click and convert it to npc coordinates. Such coordinates are needed for \code{\link{tmLocate}}
 }
 \usage{
-vColorDivSplit(vColor)
+tmClick()
 }
 %- maybe also 'usage' for other objects documented here.
-\arguments{
-  \item{vColor}{
-  }
-}
 \details{
+%%  ~~ If necessary, more details than the description above ~~
 }
 \value{
+%%  ~Describe the value returned
+%%  If it is a LIST, use
+%%  \item{comp1 }{Description of 'comp1'}
+%%  \item{comp2 }{Description of 'comp2'}
+%% ...
 }
 \references{
 %% ~put references to the literature/web site here ~

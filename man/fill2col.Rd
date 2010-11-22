@@ -2,10 +2,10 @@
 \alias{fill2col}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-fill2col
+Creates colors and legenda for treemaps with percentages
 }
 \description{
-	Creates colors and legenda for treemaps with percentages.
+	Creates colors and legenda for treemaps with percentages
 }
 \usage{
 fill2col(dat, upperboundText, showScale, neg)

@@ -2,7 +2,7 @@
 \alias{pivotSize}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-pivotSize
+Ordered treemap algorithm (pivot by size)
 }
 \description{
 	Ordered treemap algorithm, pivot by size

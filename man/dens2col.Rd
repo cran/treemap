@@ -2,10 +2,10 @@
 \alias{dens2col}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-dens2col
+Creates colors and legenda for density treemaps
 }
 \description{
-	Creates colors and legenda for density treemaps.
+	Creates colors and legenda for density treemaps
 }
 \usage{
 dens2col(dat, upperboundText, showScale, neg)

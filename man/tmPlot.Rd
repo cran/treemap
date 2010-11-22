@@ -2,23 +2,20 @@
 \alias{tmPlot}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-tmPlot
+User-friendly treemap function
 }
 \description{User-friendly treemap function}
 \usage{
-tmPlot(df, index, subindex = NA, vSize, vColor = "", sortID = "", type = "auto", titles = NA, subtitles = NA)
+tmPlot(dtf, index, vSize, vColor="", sortID="", type="auto", titles=NA, subtitles=NA, saveTm=FALSE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{df}{
+  \item{dtf}{
 	a data.frame (required).
 }
   \item{index}{
-	the name of the column in \code{df} that contains the indices (required).
+	a character vector containing the column names in \code{dtf} that contain the indices (required).
   }
-  \item{subindex}{
-	the name of the column in \code{df} that contains the subindices (optional).
-}
   \item{vSize}{
 	character containing the formula of the variables that determine the sizes (required). For details about the syntax see below.
 }
@@ -26,7 +23,7 @@ tmPlot(df, index, subindex = NA, vSize, vColor = "", sortID = "", type = "auto",
 	a character containing the formula of the variables that determine the colors (optional). For details about the syntax see below.
 }
   \item{sortID}{
-	the name of the column in \code{df} on which the rectangles should be sorted (from top left to bottom right). To inverse the sorting order, use "-" in the prefix. Optional.
+	the name of the column in \code{dtf} on which the rectangles should be sorted (from top left to bottom right). To inverse the sorting order, use "-" in the prefix. Optional.
 }
   \item{type}{
 	the type of the treemap (optional):
@@ -43,6 +40,10 @@ tmPlot(df, index, subindex = NA, vSize, vColor = "", sortID = "", type = "auto",
   \item{subtitles}{
 	A character vector containing the subtitle(s) of the treemap(s) (optional). Use this for describing the colors of the rectangles.
 }
+  \item{saveTm}{
+	Logical that determines whether the treemap is saved. If \code{TRUE}, a list is returned. This list can be used to locate a mouse click (see \code{\link{tmLocate}}).
+}
+
 }
 \details{
 	For the arguments \code{vSize} and \code{vColor}, use the following formula syntax:
@@ -56,11 +57,10 @@ tmPlot(df, index, subindex = NA, vSize, vColor = "", sortID = "", type = "auto",
 		\item multiple treemaps
 			formulas for each treemap are seperated with +}}
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+	If \code{saveTm==TRUE}, then a list is returned:
+	\item{tm}{List with for each treemap a \code{data.frame} containing information about the rectangles}
+	\item{nRow}{Number of rows in the treemap grid}
+	\item{nCol}{Number of rows in the treemap grid}
 }
 \references{
 %% ~put references to the literature/web site here ~
@@ -82,20 +82,20 @@ tmPlot(df, index, subindex = NA, vSize, vColor = "", sortID = "", type = "auto",
 	data(sbsData)
 	
 	# comparisson treemap
-	tmPlot(sbsData, index="section", subindex="subsection", vSize="employees09", vColor="employees08", sortID="-size")
-	
+	tmPlot(sbsData, index=c("section", "subsection"), vSize="employees09", vColor="employees08", sortID="-size")
+	\dontrun{
 	# four comparisson treemaps
 	tmPlot(sbsData, index="section", vSize="employees09+value added09+turnover09+salaries09", vColor="employees08+value added08+turnover08+salaries08", sortID="-size")
 
 	# density treemap
-tmPlot(sbsData,index="section", subindex ="subsection", vSize="turnover09",vColor="employees09/1000*turnover09", sortID="-size")
+tmPlot(sbsData,index=c("section", "subsection"), vSize="turnover09",vColor="employees09/1000*turnover09", sortID="-size")
 
-tmPlot(sbsData,index="section", subindex ="subsection", vSize="employees09",vColor="turnover09/employees09", sortID="-size")
+	tmPlot(sbsData,index=c("section", "subsection"), vSize="employees09",vColor="turnover09/employees09", sortID="-size")
 
 	# linked treemaps
 	tmPlot(sbsData[sbsData$section=="Manufacturing",],index="subsection",
 vSize="income09+employees09+expenditures09+salaries09",vColor="", sortID="-size")
-	
+	}
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
