@@ -1,11 +1,6 @@
 dens2col <-
-function(dat, upperboundText, showScale, neg) {
-	color <- colorRampPalette(brewer.pal(9,"OrRd"),space="rgb")(99)
-	if (neg) {
-		color <- color[99:1]
-	}
-	min=(min(dat$value2))
-	max=(max(dat$value2))
+function(dat, showScale, palette) {
+	color <- colorRampPalette(palette,space="rgb")(99)
 
 	prettyP <- pretty(dat$value2,n=8)
 	n <- length(prettyP)
@@ -35,8 +30,8 @@ function(dat, upperboundText, showScale, neg) {
 
 		grid.rect(x=unit(leg$X,"npc"), y=unit(leg$Y,"npc"), width=unit(leg$W,"npc"), height=unit(leg$H,"npc"), 
 			just=c("left","bottom"), gp = gpar(fill = as.character(leg$Col)))
-		grid.text(prettyP,x=unit(leg$X+.5*leg$W, "npc"),y=unit(0, "npc") + unit(0.5,"lines"),
-			gp=gpar(cex=upperboundText*0.8))
+		grid.text(prettyT,x=unit(leg$X+.5*leg$W, "npc"),y=unit(0, "npc") + unit(0.5,"lines"),
+			gp=gpar(cex=0.8))
 	}
 	return (color[scale])
 }

@@ -1,3 +1,42 @@
+#' User-friendly treemap function
+#'
+#' User-friendly treemap function
+#'
+#' For the arguments \code{vSize} and \code{vColor}, use the following formula syntax:
+#'		\itemize{
+#'		\item one treemap
+#'			\itemize{
+#'			\item \code{vSize = <variable name>}
+#'			\item \code{vColor = <variable name>/<scale>*<variable name>} second part (after /), useful for density treemaps, is optional when treemap type is "linked", this formula has no use}
+#'		\item multiple treemaps	formulas for each treemap are seperated with +}
+#' 
+#' @param dtf a data.frame (required).
+#' @param index	a character vector containing the column names in \code{dtf} that contain the indices (required).
+#' @param vSize character containing the formula of the variables that determine the sizes (required). For details about the syntax see below.
+#' @param vColor a character containing the formula of the variables that determine the colors (optional). For details about the syntax see below.
+#' @param sortID the name of the column in \code{dtf} on which the rectangles should be sorted (from top left to bottom right). To inverse the sorting order, use "-" in the prefix. Optional.
+#' @param type the type of the treemap (optional):
+#' \itemize{
+#'		\item \code{auto}	automatic determination of type (default setting)
+#'		\item \code{dens}	density treemap (dense areas get darker colors)
+#'		\item \code{comp} comparison treemap (colors are used to compare variables)
+#'		\item \code{perc}	treemap (color variable is in percentages)
+#'		\item \code{linked} each index has an own, distinctive, color (useful for small multiples)
+#'		\item \code{value}	treemap where values of the color variable are directly mapped to a color palette. By default a diverging color scale (Brewer's "RdYlGn") is used where negative values are red and positive green. By setting the parameters \code{palette} and \code{vColorRange} any color palette can be used.}
+#' @param titles A character vector containing the title(s) of the treemap(s) (optional). Use this for describing the sizes of the rectangles. Optional.
+#' @param subtitles A character vector containing the subtitle(s) of the treemap(s) (optional). Use this for describing the colors of the rectangles. Optional.
+#' @param palette Either a color palette or a name of a Brewer palette (see \code{display.brewer.all()}) (optional)
+#' @param vColorRange Range of the color variable values that is mapped to \code{palette} (optional)
+#' @param fontsize.title maximum) font size of the title (optional)
+#' @param fontsize.data maximum font size of the data labeling (optional)
+#' @param fontsize.legend maximum font size of the legend (optional)
+#' @param lowerbound.cex.data number between 0 and 1 that indicates the minimum fontsize of the data labels: 0 means draw all data labels, and 1 means only draw data labels if they fit at font size \code{fontsize.data}
+#' @return A list is silently returned:
+#'	\item{tm}{List with for each treemap a \code{data.frame} containing information about the rectangles}
+#'	\item{nRow}{Number of rows in the treemap grid}
+#'	\item{nCol}{Number of rows in the treemap grid}
+#'	This list can be used to locate a mouse click (see \code{\link{tmLocate}}).
+#' @export
 tmPlot <-
 function(dtf, 
 	index, 
@@ -7,7 +46,12 @@ function(dtf,
 	type="auto",
 	titles=NA,
 	subtitles=NA,
-	saveTm=FALSE) {
+	palette=NA,
+	vColorRange=NA,
+	fontsize.title=14, 
+	fontsize.data=11, 
+	fontsize.legend=12,
+	lowerbound.cex.data=0.4) {
 	#############
 	## Process variable names and titles
 	#############
@@ -185,7 +229,7 @@ function(dtf,
 			if (min(perc)<=-60|| max(perc)>=150) {
 				if (min(dtf[vSizeVector])>=0 && max(dtf[vSizeVector])<=100) {
 					type <- "perc"	
-				} else type <- "dens"
+				} else type <- "value"
 			} else type <- "comp"
 		}
 	} else if (type=="linked") {
@@ -218,6 +262,7 @@ function(dtf,
 	## Plot treemap(s)
 	############
 
+	grid.newpage()
 	
 	pushViewport(viewport(name="grid",layout=grid.layout(nRow, nCol)))
 
@@ -261,7 +306,13 @@ function(dtf,
 			type=type,
 			legenda=legenda,
 			sizeTitle=vSizeNames[i],
-			colorTitle=vColorNames[i])
+			colorTitle=vColorNames[i],
+			palette=palette,
+			vColorRange=vColorRange,
+			fontsize.title=fontsize.title, 
+			fontsize.data=fontsize.data, 
+			fontsize.legend=fontsize.legend,
+			lowerboundText=lowerbound.cex.data)
 			
 		upViewport()
 		iRow<-iRow+1
@@ -275,14 +326,10 @@ function(dtf,
 	upViewport()
 
 	# save treemaps (indices, subindices, and coordinates), and number of rows and number of columns)
-	if (saveTm) {
-		tmSave <- list()
-		tmSave$tm <- tm
-		tmSave$nRow <- nRow
-		tmSave$nCol <- nCol
-		return(tmSave)
-	} else{
-		return()
-	}
+	tmSave <- list()
+	tmSave$tm <- tm
+	tmSave$nRow <- nRow
+	tmSave$nCol <- nCol
+	invisible(tmSave)
 }
 

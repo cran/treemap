@@ -1,32 +1,41 @@
 baseTreemap <-
 function(dat,
-	type="fixed",
-	width=convertWidth(unit(1,"npc"),"inches",valueOnly = TRUE),
-	height=convertHeight(unit(1,"npc"),"inches",valueOnly = TRUE),
-	neg=FALSE,
+	type="linked",
 	legenda=TRUE,
-	upperboundText=0.8, 
-	lowerboundText=0.4, 
-	forcePrint=FALSE,
 	sizeTitle="", 
-	colorTitle="") {
+	colorTitle="",
+	palette=NA,
+	vColorRange=NA,
+	fontsize.title=14, 
+	fontsize.data=11, 
+	fontsize.legend=12, 
+	lowerboundText=0.4) {
 
+	width <- convertWidth(unit(1,"npc"),"inches",valueOnly = TRUE)
+	height <- convertHeight(unit(1,"npc"),"inches",valueOnly = TRUE)
+	
+	
 	plotMargin <- unit(0.5,"cm")
 	
-	cexLarge <- min(14,(height*3.6), (width*3.6))
-	cexSmall <- cexLarge * 0.8
+	fsTitle <- min(fontsize.title, (height*3.6), (width*3.6))
+	fsData <- min(fontsize.data, (height*3.6), (width*3.6))
+	fsLegend <- min(fontsize.legend, (height*3.6), (width*3.6))
+	
+	
+	#cexTitle <- min(maxfontsize,(height*3.6), (width*3.6))
+	#cexSmall <- cexLarge * 0.8
 
 	# Determine legenda viewports
 	if (legenda) {
 		legWidth <- min(unit(5, "inches"), convertWidth(unit(0.9, "npc")-2*plotMargin,"inches"))
-		legHeight <- unit(cexSmall * 0.06, "inches")
+		legHeight <- unit(fsLegend * 0.06, "inches")
 		
 		vpLeg <- viewport(name = "legenda",
 		  x = plotMargin,
 		  y = 0.5*plotMargin,
 		  width = unit(1, "npc") - 2 * plotMargin,
 		  height = legHeight,
-		  gp=gpar(fontsize=cexSmall),
+		  gp=gpar(fontsize=fsLegend),
 		  just = c("left", "bottom"))
 	
 		vpLeg2 <- viewport(name = "legenda2",
@@ -34,7 +43,7 @@ function(dat,
 		  y = legHeight*0.3,
 		  width = legWidth,
 		  height = legHeight*0.7,
-		  gp=gpar(fontsize=cexSmall),
+		  gp=gpar(fontsize=fsLegend),
 		  just = c("left", "bottom"))
 	} else legHeight <- unit(0,"inches")
 
@@ -44,7 +53,7 @@ function(dat,
 	  y = legHeight + 0.5*plotMargin,
 	  width = unit(1, "npc") - 2 * plotMargin,
 	  height = unit(1,"npc") - legHeight - plotMargin,
-	  gp=gpar(fontsize=cexLarge),
+	  gp=gpar(fontsize=fsTitle),
 	  just = c("left", "bottom"))
 	
 	vpDat2 <- viewport(name = "dataregion2", 
@@ -52,9 +61,8 @@ function(dat,
 	  y = 0,
 	  width = unit(1, "npc"),
 	  height = unit(1,"npc") - unit(1.5,"lines"),
-	  gp=gpar(fontsize=cexSmall),
+	  gp=gpar(fontsize=fsData),
 	  just = c("left", "bottom"))
-	
 	
 	#determine depth
 	dat <- dat[dat$value>0,]
@@ -62,7 +70,6 @@ function(dat,
 
 	dat$dlevel <- apply(dat[paste("index", 1:depth, sep="")], MARGIN=1, FUN=function(x, d){d-pmax(sum(is.na(x)), sum(x=="", na.rm=TRUE))}, depth)
 
-	
 	dats <- list()
 
 	datV <- data.frame(value=numeric(0), value2=numeric(0))
@@ -91,6 +98,8 @@ function(dat,
 	}
 	
 
+	
+	
 	# Show legenda and determine colors
 	if (legenda) {	
 		pushViewport(vpLeg)
@@ -100,14 +109,37 @@ function(dat,
 #		grid.rect()
 	}
 	
+	if (is.na(palette)) {
+		if (type == "comp") {
+			palette <- brewer.pal(11,"RdBu")
+		} else if (type == "perc") {
+			palette <- brewer.pal(9,"Blues")
+		} else if (type == "dens") {
+			palette <- brewer.pal(9,"OrRd")
+		} else if (type == "linked") {
+			palette <- c(brewer.pal(12,"Set3"),
+			brewer.pal(8,"Set2")[c(1:4,7,8)],
+			brewer.pal(9,"Pastel1")[c(1,2,4,5)])
+		} else if (type == "value") {
+			palette <- brewer.pal(11,"RdYlGn")
+		}
+	} else {
+		if ((length(palette)==1) && (palette[1] %in%row.names(brewer.pal.info))) {
+			palette <- brewer.pal(brewer.pal.info[palette, "maxcolors"], palette)
+		}
+	}
+	
+	
 	if (type == "comp") {
-		datV$color <- comp2col(datV, upperboundText, legenda, neg)
+		datV$color <- comp2col(datV, legenda, palette)
 	} else if (type == "perc") {
-		datV$color <- fill2col(datV, upperboundText, legenda, neg)
+		datV$color <- fill2col(datV, legenda, palette)
 	} else if (type == "dens") {
-		datV$color <- dens2col(datV, upperboundText, legenda, neg)
+		datV$color <- dens2col(datV, legenda, palette) 
 	} else if (type == "linked") {
-		datV$color <- fixed2col(datV)
+		datV$color <- fixed2col(datV, palette)
+	} else if (type == "value") {
+		datV$color <- value2col(datV, legenda, palette, vColorRange)
 	}
 	if (legenda) {	
 		upViewport()
@@ -151,7 +183,7 @@ function(dat,
 		}}
 		return(recDat)
 	}
-	
+
 	recList <- findRecs(dats[[1]], 1, dataRec, dats)
 	
 #browser()
