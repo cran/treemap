@@ -1,6 +1,6 @@
 # Creates graphical rectangle objects out of coordinates
 createRec <-
-function(recList, filled=TRUE, label="", labelbg=FALSE, labellb=0, lwd=1) {
+function(recList, filled, label, labelbg=TRUE, labellb, lwd, inflate.labels, force.print.labels, cex_index) {
 #browser()
 	if (nrow(recList)==0) {
 		return(list(recs=NA, txt=NA, txtbg=NA))
@@ -25,19 +25,27 @@ function(recList, filled=TRUE, label="", labelbg=FALSE, labellb=0, lwd=1) {
 		height=unit(recList$h,"npc"), just=c("left","bottom"), name=recList$ind, gp = gpar(lwd=lwd, lex=1,fill = fill))
 	
 	if (label != "") {
-
 		if (filled || labelbg) {
-			maxCol <- mapply(as.integer(rgbcol[1,]),as.integer(rgbcol[2,]),as.integer(rgbcol[3,]),FUN="max")
-			minCol <- mapply(as.integer(rgbcol[1,]),as.integer(rgbcol[2,]),as.integer(rgbcol[3,]),FUN="min")
-			lightness <- floor(.5*(maxCol+minCol))
-			tCol <- c(rep("black",length(recs$x)))
-			tCol[lightness<128] <- "white"
+			light <- apply(rgbcol, MARGIN=2, mean) >= 128
+			tCol <- ifelse(light, "black", "white")
 		} else {
 			tCol <- c(rep("black",length(recs$x)))
 		}
-		txt <- str2rect(recs, fontcol=tCol, fill=txtfill, bold=( label=="bold"), enlargable=FALSE)
-		txt$txt$gp$col[txt$txt$gp$cex < labellb] <- NA
-		txt$bg$gp$fill[txt$txt$gp$cex < labellb] <- NA
+		noText <- recs$name == ""
+		recs$name[noText] <- " "
+		txt <- str2rect(recs, fontcol=tCol, fill=txtfill, bold=( label=="bold"), inflate.labels=inflate.labels, cex_index=cex_index)
+		
+		txt$txt$gp$col[noText] <- NA
+		txt$bg$gp$fill[noText] <- NA
+		
+		tooSmall <- txt$txt$gp$cex < labellb
+		if (force.print.labels) {
+			txt$txt$gp$cex[tooSmall] <- labellb
+			txt$bg$gp$fill[tooSmall] <- NA
+		} else {
+			txt$txt$gp$col[tooSmall] <- NA
+			txt$bg$gp$fill[tooSmall] <- NA
+		}
 
 	} else {
 		txt <- list()

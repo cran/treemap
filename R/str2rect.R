@@ -6,9 +6,9 @@
 # @param fontcol vector defining the colors of the text
 # @param fill vector defining the backgroud colors of the text
 # @param bold logical defining whe the text is bold
-# @param enlargable logical defining whether the textsize may exceed \code{cex=1}
+# @param inflate.labels logical defining whether the textsize may exceed \code{cex=1}
 str2rect <-
-function(grb, fontcol="black", fill=NA, bold=FALSE, enlargable = FALSE) {
+function(grb, fontcol, fill, bold, inflate.labels, cex_index) {
 	# wrap text to 1-5 sentences
 	txtWraps <- lapply(grb$name, FUN=function(txt) {
 		txtWrap <- list(txt)
@@ -32,7 +32,6 @@ function(grb, fontcol="black", fill=NA, bold=FALSE, enlargable = FALSE) {
 
 	# calculate heights and widths of text
 	gp <- get.gpar()
-	
 	results <- mapply(txtWraps, inchesW, inchesH, FUN=function(wrap, inchesW, inchesH) {
 		txtH <- convertHeight(unit(1,"lines"), "inches", valueOnly=TRUE) * (wrap$lines-0.25) * gp$lineheight
 		txtW <- convertWidth(stringWidth(wrap$txt), "inches", valueOnly=TRUE)
@@ -42,25 +41,21 @@ function(grb, fontcol="black", fill=NA, bold=FALSE, enlargable = FALSE) {
 		incr <- pmin.int(incrH, incrW)
 		
 		# determine best fit
-		if (!enlargable) {
-			incr[incr>1] <- 1
-			winningStr <- which.max(incr)[1]
-		} else {
+		if (inflate.labels) {
 			aspR <- pmax.int(incrH, incrW) / incr
 			winningStr <- which.min(aspR)
+		} else {
+			incr[incr>1] <- 1
+			winningStr <- which.max(incr)[1]
 		}
 		return(list(txt=wrap$txt[winningStr], cex=incr[winningStr], lines=wrap$lines[winningStr]))
 	})
-	
 	txt <- unlist(results[1,])
-	cex <- unlist(results[2,])
+	cex <- unlist(results[2,]) * cex_index
 	nlines <- unlist(results[3,])
 	
 	fontface <- ifelse(bold, "bold", "plain")
 	txtGrb <- textGrob(txt, x=grb$x+0.5*grb$width, y=grb$y+0.5*grb$height, gp=gpar(cex=cex, fontface=fontface, col=fontcol))
-	# justify
-	# txtGrb$just <- grb$just
-	
 	
 		
 	
@@ -76,21 +71,15 @@ function(grb, fontcol="black", fill=NA, bold=FALSE, enlargable = FALSE) {
 
 	
 	# background rect, height slightly extended
-#	if (!is.na(fill[1])) {
-		bckH <- mapply(txt, txtGrb$gp$cex, nlines, FUN=function(x,y,z, fontface){
-			convertHeight(grobHeight(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE) * z/(z-0.25)}, fontface, USE.NAMES=FALSE)
-		bckW <- mapply(txt, txtGrb$gp$cex, FUN=function(x,y, fontface){
-			convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
 
-		bckGrb <- rectGrob(x=txtGrb$x, y=txtGrb$y, width=bckW, height=bckH, gp=gpar(fill=fill, col=NA))
+	bckH <- mapply(txt, txtGrb$gp$cex, nlines, FUN=function(x,y,z, fontface){
+		convertHeight(grobHeight(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE) * z/(z-0.25)}, fontface, USE.NAMES=FALSE)
+	bckW <- mapply(txt, txtGrb$gp$cex, FUN=function(x,y, fontface){
+		convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
 
-#	} else {
-#		bckGrb <- NA
-#	}
+	bckGrb <- rectGrob(x=txtGrb$x, y=txtGrb$y, width=bckW, height=bckH, gp=gpar(fill=fill, col=NA))
 
-	#grid.draw(grb)
-	#grid.draw(bckGrb)
-	#grid.draw(txtGrb)
+
 	
 	return(list(txt=txtGrb, bg=bckGrb))
 }
