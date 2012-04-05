@@ -8,7 +8,7 @@
 #' @param vColor name of the variable that, in combination with \code{type}, determines the colors of the rectangles. The variable can be scaled by the addition of "*<scale factor>" or "/<scale factor>". For small multiples, a vector of variable names (one for each treemap) should be given.
 #' @param type the type of the treemap:
 #' \describe{
-#'		\item{\code{"comp"}:}{colors indicate change of the \code{vSize}-variable with respect to the \code{vColor}-variable (in percentages)}
+#'		\item{\code{"comp"}:}{colors indicate change of the \code{vSize}-variable with respect to the \code{vColor}-variable in percentages. Note: the negative scale may be different from the positive scale in order to compensate for the ratio distribution.}
 #'		\item{\code{"dens"}:}{colors indicate density. This is aanalogous to a population density map where \code{vSize}-values are area sizes, \code{vColor}-values are populations per area, and colors are computed as densities (i.e.\ population per squared km's).}
 #'		\item{\code{"linked"}:}{each object has a distinct color, which is useful for small multiples (objects are linked by color)}
 #'		\item{\code{"index"}:}{each aggregation level (defined by \code{index}) has a distinct color}
@@ -29,6 +29,7 @@
 #' @param lowerbound.cex.labels multiplier between 0 and 1 that sets the lowerbound for the data label font sizes: 0 means draw all data labels, and 1 means only draw data labels if they fit at \code{fontsize.data}
 #' @param inflate.labels logical that determines whether data labels are inflated inside the rectangles
 #' @param force.print.labels logical that determines whether data labels are being forced to be printed (also when they don't fit)
+#' @param aspRatio preferred aspect ratio of the main rectangle, defined by width/height. When set to \code{NA}, the available window size is used.
 #' @param na.rm logical that determines whether missing values are omitted during aggregation
 #' @return A list is silently returned:
 #'	\item{tm}{list with for each treemap a \code{data.frame} containing information about the rectangles}
@@ -61,6 +62,7 @@ function(dtf,
 	lowerbound.cex.labels=0.4,
 	inflate.labels=FALSE,
 	force.print.labels=FALSE,
+	aspRatio=NA,
 	na.rm = FALSE) {
 	
 	#############
@@ -290,6 +292,7 @@ function(dtf,
 	###########
 	## Aggregate
 	###########
+	
 	vars <- unique(c(vSize, vColor))
 	
 	dtfDT <- as.data.table(dtf)
@@ -398,7 +401,8 @@ function(dtf,
 			inflate.labels=inflate.labels,
 			force.print.labels=force.print.labels,
 			cex_indices=cex_indices,
-			indexNames=index)
+			indexNames=index,
+			aspRatio)
 			
 		upViewport()
 		iRow<-iRow+1
