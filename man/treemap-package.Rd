@@ -5,8 +5,8 @@
 \title{Treemap visualization}
 \description{
   \tabular{ll}{ Package: \tab treemap\cr Type: \tab
-  Package\cr Version: \tab 1.0-4\cr Date: \tab
-  2012-04-05\cr License: \tab GPL-3\cr LazyLoad: \tab
+  Package\cr Version: \tab 1.1-1\cr Date: \tab
+  2012-07-10\cr License: \tab GPL-3\cr LazyLoad: \tab
   yes\cr }
 }
 \details{
@@ -22,30 +22,15 @@
   object.
 }
 \examples{
-# fictive structural business statistics (sbs) data of 2008 and 2009
-data(sbsData)
+# load Gross national income data
+data(GNI2010)
 
-# comparisson treemap: colors indicate change of vSize with respect to vColor
-tmPlot(sbsData, 
-	   index=c("section", "subsection"), 
-	   vSize="employees09", 
-	   vColor="employees08",
-	   type="comp")
-
-# density treemap: colors indicate density (like a population density map)
-tmPlot(sbsData,
-	   index=c("section", "subsection"),
-	   vSize="turnover09",
-	   vColor="employees09*1000",
-	   type="dens")
-
-# value treemap (aka Map of the Market)
-sbsData$employees.growth <- sbsData$employees09 - sbsData$employees08
-tmPlot(sbsData, 
-	   index=c("section", "subsection"), 
-	   vSize="employees09", 
-	   vColor="employees.growth", 
-	   type="value")
+# create treemap
+tmPlot(GNI2010,
+       index=c("continent", "iso3"),
+       vSize="population",
+       vColor="GNI",
+       type="value")
 }
 \author{
   Martijn Tennekes \email{mtennekes@gmail.com}

@@ -2,16 +2,17 @@ baseTreemap <-
 function(dat,
 	type,
 	algorithm,
-	legenda,
+	position.legend,
 	sizeTitle, 
 	colorTitle,
 	palette,
-	vColorRange,
+    range,
 	fontsize.title, 
 	fontsize.labels, 
 	fontsize.legend, 
 	lowerbound.cex.labels,
 	inflate.labels,
+	bg.labels,
 	force.print.labels,
 	cex_indices,
 	indexNames,
@@ -28,57 +29,111 @@ function(dat,
 	fsData <- min(fontsize.labels, (height*3.6), (width*3.6))
 	fsLegend <- min(fontsize.legend, (height*3.6), (width*3.6))
 	
-	# Determine legenda viewports
-	if (legenda) {
-		legWidth <- min(unit(5, "inches"), convertWidth(unit(0.9,
-															 "npc")-2*plotMargin,"inches"))
-		legHeight <- unit(fsLegend * 0.06, "inches")
+	# Determine legend viewports
+	#browser()
+	titleSpace <- convertHeight(unit(1.5* (fsTitle/get.gpar()$fontsize),
+									 "lines"), "inches")
+	if (position.legend == "bottom") {
+		legHeight <- unit(fsLegend * 0.03 + 0.4, "inches")
+		legWidth <- unit(0, "npc")
 		
 		vpLeg <- viewport(name = "legenda",
-		  x = plotMargin,
-		  y = 0.5*plotMargin,
-		  width = unit(1, "npc") - 2 * plotMargin,
-		  height = legHeight,
-		  gp=gpar(fontsize=fsLegend),
-		  just = c("left", "bottom"))
+						  x = plotMargin,
+						  y = 0.5 * plotMargin + legHeight*0.3,
+						  width = unit(1, "npc") - 2 * plotMargin,
+						  height = legHeight*0.7,
+						  gp=gpar(fontsize=fsLegend),
+						  just = c("left", "bottom"))
+		
+		vpLeg2 <- viewport(name = "legenda_title",
+						   x = plotMargin,
+						   y = 0.5 * plotMargin,
+						   width = unit(1, "npc") - 2 * plotMargin,
+						   height = legHeight*0.3,
+						   gp=gpar(fontsize=fsLegend),
+						   just = c("left", "bottom"))
+		
+	} else if (position.legend == "right") {
+		scale <- fsLegend / get.gpar()$fontsize
+		maxStringWidth <- max(convertWidth(stringWidth(colorTitle), "inches",
+										   valueOnly=TRUE)*scale+.5, 1)
+		if (type=="categorical") {
+			maxStringWidth	<- max(maxStringWidth, 
+								  convertWidth(stringWidth(
+								  	levels(dat$value2)),
+								  			 "inches",
+								  			 valueOnly=TRUE)*scale+.75)
+			
+		} else if (type=="index") {
+			maxStringWidth	<- max(maxStringWidth, 
+								  convertWidth(stringWidth(
+								  	indexNames),
+								  			 "inches",
+								  			 valueOnly=TRUE)*scale+.75)
+		}
+
+		legWidth <- unit(maxStringWidth, "inches")
+		legHeight <- unit(0, "npc")
+		vpLeg <- viewport(name = "legenda",
+						  x = unit(1, "npc") - plotMargin - legWidth,
+						  y = 0.5 * plotMargin,
+						  width = legWidth,
+						  height = unit(1, "npc") - plotMargin - titleSpace,
+						  gp=gpar(fontsize=fsLegend),
+						  just = c("left", "bottom"))
+		
+		vpLeg2 <- viewport(name = "legenda_title",
+						   x = unit(1, "npc") - plotMargin - legWidth,
+						   y = unit(1, "npc") - 0.5 * plotMargin - titleSpace,
+						   width = legWidth,
+						   height = titleSpace,
+						   gp=gpar(fontsize=fsLegend),
+						   just = c("left", "bottom"))
+	} else {
+		legWidth <- unit(0, "npc")
+		legHeight <- unit(0, "npc")
+	}
 	
-		vpLeg2 <- viewport(name = "legenda2",
-		  x = (unit(1, "npc") - legWidth)*0.5,
-		  y = legHeight*0.3,
-		  width = legWidth,
-		  height = legHeight*0.7,
-		  gp=gpar(fontsize=fsLegend),
-		  just = c("left", "bottom"))
-	} else legHeight <- unit(0,"inches")
-
-	# Determine treemap viewports
-	vpDat <- viewport(name = "dataregion", 
-	  x = plotMargin,
-	  y = legHeight + 0.5*plotMargin,
-	  width = unit(1, "npc") - 2 * plotMargin,
-	  height = unit(1,"npc") - legHeight - plotMargin,
-	  gp=gpar(fontsize=fsTitle),
-	  just = c("left", "bottom"))
-
-	vpDat2 <- viewport(name = "dataregion2", 
-					   x = 0,
-					   y = 0,
-					   width = unit(1, "npc"),
-					   height = unit(1, "npc") - unit(1.5, "lines"),
-					   gp=gpar(fontsize=fsData),
+	vpDat <- viewport(name = "data",
+					  x = plotMargin,
+					  y = legHeight + 0.5*plotMargin,
+					  width = unit(1, "npc") - 2 * plotMargin - legWidth,
+					  height = unit(1,"npc") - 
+					  	legHeight - plotMargin - titleSpace,
+					  gp=gpar(fontsize=fsData),
+					  just = c("left", "bottom"))
+	
+	vpDat2 <- viewport(name = "data_title", 
+					   x = plotMargin,
+					   y = unit(1, "npc") - .5*plotMargin - titleSpace,
+					   width = unit(1, "npc") - 2 * plotMargin - legWidth,
+					   height = titleSpace,
+					   gp=gpar(fontsize=fsTitle),
 					   just = c("left", "bottom"))
 	
 	#determine depth
 	depth <- sum(substr(colnames(dat),1,5)=="index")
 #browser()
 	dats <- list()
-	datV <- data.table(value=numeric(0), value2=numeric(0), index=character(0), level=integer(0))
+	datV <- data.table(value=numeric(0), value2=numeric(0), index=character(0), level=integer(0), clevel=integer(0))
+	getMode <- function(x) which.max(table(x))[1]
+	
 	for (i in 1:depth) {
 		indexList <- paste("index", 1:i, sep="")
 		value <- NULL; rm(value)
 		value2 <- NULL; rm(value2)
 		sortInd <- NULL; rm(sortInd)
-		dats_i <- dat[, lapply(.SD[, list(value, value2, sortInd)], sum), by=indexList]
+		if (type=="categorical") {
+			dats_i <- dat[, list(value=sum(value),
+								 value2=getMode(value2),
+								 sortInd=sum(sortInd)), 
+								 by=indexList]
+			dats_i$value2 <- factor(dats_i$value2,
+									labels=levels(dat$value2))
+		} else {
+			dats_i <- dat[, lapply(.SD[, list(value, value2, sortInd)],
+								   sum), by=indexList]
+		}
 		
 		## remove rectangles of size 0
 		dats_i <- dats_i[dats_i$value>0, ]
@@ -102,32 +157,35 @@ function(dat,
 					  dats_i[, list(value, value2,
 					  			  index=do.call(paste, 
 					  			  			  c(dats_i[, indexList, with=FALSE], sep="__")), 
-					  			  level)])
+					  			  level, clevel)])
 		dats[[i]] <- dats_i
 	}
 	
 	# Show legenda and determine colors
-	if (legenda) {	
-		pushViewport(vpLeg)
-		grid.text(colorTitle, y = unit(0.5, "lines"))
+	if (position.legend!="none") {	
 		pushViewport(vpLeg2)
+		grid.text(colorTitle)
+		upViewport()
+		pushViewport(vpLeg)
 	}
 	
 	if (type == "comp") {
-		datV$color <- comp2col(datV, legenda, palette)
+		datV$color <- comp2col(datV, position.legend, palette, range)
 	} else if (type == "dens") {
-		datV$color <- dens2col(datV, legenda, palette) 
+		datV$color <- dens2col(datV, position.legend, palette, range) 
 	} else if (type == "linked") {
-		datV$color <- fixed2col(datV, palette)
+		datV$color <- linked2col(datV, position.legend, palette)
 	} else if (type == "index") {
-		datV$color <- index2col(datV, palette)
+		datV$color <- index2col(datV, position.legend, palette,
+								indexNames)
 	} else if (type == "value") {
-		datV$color <- value2col(datV, legenda, palette, vColorRange)
+		datV$color <- value2col(datV, position.legend, palette, 
+								range)
+	} else if (type == "categorical") {
+		datV$color <- cat2col(datV, position.legend, palette,
+							  levels(dat$value2))
 	}
-	if (legenda) {	
-		upViewport()
-		upViewport()
-	}
+	if (position.legend!="none") upViewport()
 	
 	datL <- sapply(dats, FUN=nrow)
 	datL1 <- cumsum(c(1, datL[-depth]))
@@ -136,9 +194,11 @@ function(dat,
 		dats[[i]]$color <- datV[datL1[i]:datL2[i], color]
 	}
 	
-	pushViewport(vpDat)
-	grid.text(sizeTitle, y = unit(1, "npc") - unit(0.5, "lines"))
+	
 	pushViewport(vpDat2)
+	grid.text(sizeTitle)
+	upViewport()
+	pushViewport(vpDat)
 	
 	datWidth <- convertWidth(unit(1,"npc"), 
 							 "inches", valueOnly=TRUE)
@@ -154,7 +214,7 @@ function(dat,
 		}
 	}
 	
-	vpDat3 <- viewport(name = "dataregion3", 
+	vpDat3 <- viewport(name = "data_asp", 
 					   x = unit(0.5, "npc"),
 					   y = unit(0.5, "npc"),
 					   width = unit(datWidth, "inches"),
@@ -163,7 +223,6 @@ function(dat,
 					   just = c("centre", "centre"))
 	
 	pushViewport(vpDat3)
-	grid.rect()
 
 	dataRec <- data.table(X0=0, Y0=0, W=datWidth, H=datHeight)
 	recList <- data.table(ind=factor(NULL), 
@@ -197,7 +256,6 @@ function(dat,
 	for (i in 1:depth) {
 		dats_i <- dats[[i]]
 		if (i==1) {
-			
 			rec <- unlist(dats_i[1, list(X0, Y0, W, H)])
 			value<-dats_i$value
 			names(value) <- dats_i$index1
@@ -292,6 +350,7 @@ function(dat,
 									 filled=FALSE, 
 									 label="normal",
 									 labellb=lowerbound.cex.labels, 
+									 labelbg = bg.labels, 
 									 lwd = lwds[!whichFill & !whichBold],
 									 inflate.labels=inflate.labels,
 									 force.print.labels=force.print.labels, 
@@ -301,12 +360,11 @@ function(dat,
 									 filled=FALSE, 
 									 label="bold", 
 									 labellb=lowerbound.cex.labels, 
-									 labelbg = TRUE, 
+									 labelbg = bg.labels, 
 									 lwd = lwds[!whichFill & whichBold], 
 									 inflate.labels=inflate.labels,
 									 force.print.labels=force.print.labels, 
 									 cex_index=cex_indices[1]) 
-		
 		cover <- overlap(recs_fill_norm$txtbg, recs_trans_norm$txtbg)
 		if (!is.na(cover[1])) {
 			recs_fill_norm$txt$gp$col[cover] <- NA
@@ -317,6 +375,13 @@ function(dat,
 			recs_fill_norm$txt$gp$col[cover] <- NA
 			recs_fill_norm$bg$gp$fill[cover] <- NA
 		}
+		#browser()
+# 		if (!is.na(bg.labels)) {
+# 			if (!is.na(recs_trans_norm$txtbg[1]))
+# 				recs_trans_norm$txtbg$gp$fill <- NA
+# 			if (!is.na(recs_trans_bold$txtbg[1]))
+# 				recs_trans_bold$txtbg$gp$fill <- bg.labels
+# 		}
 	
 		drawRecs(recs_fill_norm)
 		drawRecs(recs_trans_norm)
@@ -334,9 +399,10 @@ function(dat,
 	mat[mat=="NA"] <- NA
 	res <- as.data.frame(mat)
 	names(res) <- indexNames
-	resultDat <- cbind(res, as.data.frame(recList[whichFill, list(x0, y0, w, h)]))
+	resultDat <- cbind(res, as.data.frame(recList[whichFill, 
+												  list(x0, y0, w, h)]))
 	
-	upViewport(3)
+	upViewport(2)
 	#upViewport()
 	return(resultDat)
 }
