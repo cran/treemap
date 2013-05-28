@@ -1,37 +1,52 @@
 # Creates graphical rectangle objects out of coordinates
 createRec <-
-function(recList, filled, label, labelbg=NA, labellb, lwd, inflate.labels, force.print.labels, cex_index) {
+function(datlist, filled, label, bg.labels=220, labellb, lwd, inflate.labels, force.print.labels, cex_index) {
 #browser()
-	if (nrow(recList)==0) {
+	if (nrow(datlist)==0) {
 		return(list(recs=NA, txt=NA, txtbg=NA))
 	}
-	transp <- c(rep(255,nrow(recList)))
-	rgbcol <- col2rgb(as.character(recList$color))
-	rgbcol2 <- rgb(rgbcol["red",],rgbcol["green",],rgbcol["blue",],alpha=transp,maxColorValue=255)
-
-	fill <- as.character(rgbcol2)
-	
-	if (is.na(labelbg)) {
-		txtfill <- fill
-		txtRgb <- rgbcol
-	} else {
-# 		labelbgRgb <- col2rgb(labelbg, alpha=TRUE)
+# 	transp <- c(rep(200,nrow(datlist)))
+# 	rgbcol <- col2rgb(as.character(datlist$color))
+# 	rgbcol2 <- rgb(rgbcol["red",],rgbcol["green",],rgbcol["blue",],alpha=transp,maxColorValue=255)
+# 
+# 	fill <- datlist$color
+# 	
+# 	if (is.numeric(bg.labels)) {
+# 		txtfill <- as.character(rgbcol2)
+# 		txtRgb <- rgbcol
+# 	} else {
+# 
+# 		txtfill <- rep(bg.labels, nrow(datlist))
+# 		txtRgb <- col2rgb(txtfill)
 # 		
-# 		txtRgb <- apply(rgbcol, MARGIN=2, FUN=function(x, y, t){
-# 			x*(255-t)/255 + y*(t)/255}, labelbgRgb[1:3], labelbgRgb[4])
-# 		txtfill <- apply(txtRgb, MARGIN=2, FUN=function(x){rgb(x[1], x[2], x[3], maxColorValue=255)} )
-
-		txtfill <- rep(labelbg, nrow(recList))
-		txtRgb <- col2rgb(txtfill)
-		
+# 	}
+# 	
+# 	if (!filled) {
+# 		fill <- NA
+# 	}
+	
+	rgbcol <- col2rgb(as.character(datlist$color))
+	
+	if (filled) {
+	    fill <- datlist$color
+	    txtfill <- NA
+	    txtRgb <- rgbcol
+	} else if (is.numeric(bg.labels)) {
+	    transp <- c(rep(bg.labels, nrow(datlist)))
+	    rgbcol2 <- rgb(rgbcol["red",],rgbcol["green",],rgbcol["blue",],alpha=transp,maxColorValue=255)
+	    txtfill <- as.character(rgbcol2)
+	    txtRgb <- rgbcol
+	    fill <- NA
+	} else {
+	    txtfill <- rep(bg.labels, nrow(datlist))
+	    txtRgb <- col2rgb(txtfill)
+	    fill <- NA
 	}
 	
-	if (!filled) {
-		fill <- NA
-	}
-	
-	recs <- rectGrob(x=unit(recList$x0,"npc"), y=unit(recList$y0,"npc"), width=unit(recList$w,"npc"), 
-		height=unit(recList$h,"npc"), just=c("left","bottom"), name=recList$ind, gp = gpar(lwd=lwd, lex=1,fill = fill))
+    
+    
+	recs <- rectGrob(x=unit(datlist$x0,"npc"), y=unit(datlist$y0,"npc"), width=unit(datlist$w,"npc"), 
+		height=unit(datlist$h,"npc"), just=c("left","bottom"), name=datlist$n, gp = gpar(lwd=lwd, lex=1,fill = fill))
 	
 	if (label != "") {
 		light <- apply(txtRgb, MARGIN=2, mean) >= 128
