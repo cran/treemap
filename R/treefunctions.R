@@ -3,20 +3,11 @@ treedepth <- function(data) {
 	apply(data, MARGIN=1, FUN=function(x)k-sum(is.na(x)))
 }
 
-treeapply <- function(dat, values, depth=NULL, fun, prepare.dat=FALSE, ...) {
+treeapply <- function(dat, values, depth=NULL, fun, ...) {
     .SD <- NULL
-    
-	if (prepare.dat) if (is.data.table(dat)) {
-		dat[, names(dat):=lapply(.SD,as.factor)]
-	} else {
-		dat <- lapply(dat, as.factor)
-		#require(data.table)
-		dat <- as.data.table(dat)
-	}
+    k <- ncol(dat)
 	dt <- dat[!duplicated(dat), ]
 	
-	k <- ncol(dt)
-
     # hierarchical depth
 	if (missing(depth)) {
 		dt[, l:=treedepth(dt)]
@@ -60,7 +51,6 @@ treeapply <- function(dat, values, depth=NULL, fun, prepare.dat=FALSE, ...) {
 		res <- as.list(dt[, fn(.SD), by=id][, vars, with=FALSE])
 		dt[, eval(vars):=res]
 	}
-	
 	id1 <- treeid(dat)$current
 	id2 <- treeid(dt[,1:k, with=FALSE])$current
 	
@@ -71,19 +61,23 @@ treeapply <- function(dat, values, depth=NULL, fun, prepare.dat=FALSE, ...) {
 addRange <- function(x, depth, frc = .5) {
 	LB <- x[[1]][1]
 	UB <- x[[2]][1]
+    REV <- x[[3]][1]
 	
 	nr <- length(x[[1]])
 	#browser()
 	
     sq <- seq(LB, UB, length.out=nr+1)
-	spacer <- (sq[2] - sq[1]) * frc *.5
+	spacer <- (sq[2] - sq[1]) * (1 - frc) *.5
 
 	s <- spread(nr)
+    if (REV) s <- rev(s)
 	
 	start <- sq[1:nr][s]
 	end <- sq[2:(nr+1)][s]
+    
+    
 
-    list(lb=start+spacer, ub=end-spacer)
+    list(lb=start+spacer, ub=end-spacer, rev=rep(c(F, T), length.out=nr))
 }
 
 ########## method 2: modify fixed colors with hsv space
@@ -116,6 +110,7 @@ spread <- function(n) {
     #for (n in 1:50) {
     if (n<5) {
         s <- 1:n
+        if (n>2) s[2:3] <- 3:2
     } else {
         s.step <- floor(n/(2.5))
         s <- seq(1, by=s.step, length.out=n)
@@ -135,46 +130,21 @@ spread <- function(n) {
 
 
 
-treepalette <- function(dat, method="HCL", palette=NULL, palette.HCL.options, prepare.dat=FALSE, ...) {
-    #require(colorspace)
-    k <- ncol(dat)
-	if (method=="HCL") {
-		res <- treeapply(dat, list(lb=palette.HCL.options$hue_start, 
-                                   ub=palette.HCL.options$hue_end), 
-                         fun="addRange", frc=palette.HCL.options$hue_fraction,
-                         prepare.dat=prepare.dat)
-		
-		point <- with(res, (lb+ub)/2)
-		chr <- palette.HCL.options$chroma + 
-            palette.HCL.options$chroma_slope * (res$l-1)
-        #75 - (k-res$l) * 10
-		lum <- palette.HCL.options$luminance + 
-            palette.HCL.options$luminance_slope * (res$l-1)
-        #lum <- 95 - res$l * 10 #90
-		color <- hcl(point,c=chr, l=lum)
-	} else if (method=="HSV") {
-		nl <- nlevels(dat[[1]])
-		
-        palette <- rep(palette, length.out=nl)
 
-        co <- coords(as(hex2RGB(palette), "HSV"))
-        value <- as.list(as.data.frame(co))
-		
-		res <- treeapply(dat, value, fun="hsvs")
-		color <- with(res, hex(HSV(H, S, V)))
-	}
-	color
-}
 
 
 treeid <- function(dat) {
-	current <- apply(dat, MARGIN=1, paste, collapse=".")
-	parent <- apply(dat, MARGIN=1, function(x){
-		n <- length(x)-sum(is.na(x))-1
-		y <- rep(NA, length(x))
-		if (n>0) y[1:n] <- x[1:n]
-		paste(y,collapse=".")
-	})
+	current <- apply(dat, MARGIN=1, paste, collapse="__")
+    if (ncol(dat)==1) {
+        parent <- rep.int("NA", length(current))
+    } else {
+    	parent <- apply(dat, MARGIN=1, function(x){
+    		n <- length(x)-sum(is.na(x))-1
+    		y <- rep(NA, length(x))
+    		if (n>0) y[1:n] <- x[1:n]
+    		paste(y,collapse="__")
+    	})
+    }
 	list(current=current, parent=parent)
 }
 

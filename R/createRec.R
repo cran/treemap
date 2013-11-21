@@ -1,32 +1,13 @@
 # Creates graphical rectangle objects out of coordinates
 createRec <-
-function(datlist, filled, label, bg.labels=220, labellb, lwd, inflate.labels, force.print.labels, cex_index) {
+function(datlist, filled, label, bg.labels=220, labellb, lwd, inflate.labels, force.print.labels, 
+         cex_index, border.col, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels) {
 #browser()
 	if (nrow(datlist)==0) {
 		return(list(recs=NA, txt=NA, txtbg=NA))
 	}
-# 	transp <- c(rep(200,nrow(datlist)))
-# 	rgbcol <- col2rgb(as.character(datlist$color))
-# 	rgbcol2 <- rgb(rgbcol["red",],rgbcol["green",],rgbcol["blue",],alpha=transp,maxColorValue=255)
-# 
-# 	fill <- datlist$color
-# 	
-# 	if (is.numeric(bg.labels)) {
-# 		txtfill <- as.character(rgbcol2)
-# 		txtRgb <- rgbcol
-# 	} else {
-# 
-# 		txtfill <- rep(bg.labels, nrow(datlist))
-# 		txtRgb <- col2rgb(txtfill)
-# 		
-# 	}
-# 	
-# 	if (!filled) {
-# 		fill <- NA
-# 	}
 	
 	rgbcol <- col2rgb(as.character(datlist$color))
-	
 	if (filled) {
 	    fill <- datlist$color
 	    txtfill <- NA
@@ -46,17 +27,19 @@ function(datlist, filled, label, bg.labels=220, labellb, lwd, inflate.labels, fo
     
     
 	recs <- rectGrob(x=unit(datlist$x0,"npc"), y=unit(datlist$y0,"npc"), width=unit(datlist$w,"npc"), 
-		height=unit(datlist$h,"npc"), just=c("left","bottom"), name=datlist$n, gp = gpar(lwd=lwd, lex=1,fill = fill))
+		height=unit(datlist$h,"npc"), just=c("left","bottom"), name=datlist$n, gp = gpar(lwd=lwd, lex=1, fill = fill, col=border.col))
 	
-	if (label != "") {
-		light <- apply(txtRgb, MARGIN=2, mean) >= 128
+	if (label) {
+        light <- apply(txtRgb * c(.299, .587, .114), MARGIN=2, sum) >= 128
 		tCol <- ifelse(light, "black", "white")
 
 		noText <- recs$name == ""
 		recs$name[noText] <- " "
-		txt <- str2rect(recs, fontcol=tCol, fill=txtfill, bold=( label=="bold"), inflate.labels=inflate.labels, cex_index=cex_index)
+		txt <- str2rect(recs, fontcol=tCol, fill=txtfill, fontface=fontface.labels, fontfamily=fontfamily.labels, inflate.labels=inflate.labels, 
+                        cex_index=cex_index, align.labels=align.labels, xmod.labels=xmod.labels, ymod.labels=ymod.labels)
 		
-		txt$txt$gp$col[noText] <- NA
+        
+        txt$txt$gp$col[noText] <- NA
 		txt$bg$gp$fill[noText] <- NA
 		
 		tooSmall <- txt$txt$gp$cex < labellb

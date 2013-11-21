@@ -18,9 +18,9 @@ tmGetViewports <- function(vp, fontsize.title, fontsize.labels, fontsize.legend,
     plotMargin <- unit(0.5,"cm")
     
     # determine fontsizes
-    fsTitle <- min(fontsize.title, (height*3.6), (width*3.6))
-    fsData <- min(fontsize.labels, (height*3.6), (width*3.6))
-    fsLegend <- min(fontsize.legend, (height*3.6), (width*3.6))
+    fsTitle <- fontsize.title#min(fontsize.title, (height*3.6), (width*3.6))
+    fsData <- max(min(fontsize.labels), 1)#min(fontsize.labels, (height*3.6), (width*3.6))
+    fsLegend <- fontsize.legend#min(fontsize.legend, (height*3.6), (width*3.6))
     
     # Determine legend viewports
     titleSpace <- convertHeight(unit(1.5* (fsTitle/get.gpar()$fontsize),
@@ -109,6 +109,8 @@ tmGetViewports <- function(vp, fontsize.title, fontsize.labels, fontsize.legend,
         } else if (aspRatio > aspWindow) {
             datHeight <- datWidth / aspRatio
         }
+    } else {
+        aspRatio <- datWidth / datHeight
     }
     
     vpDatAsp <- viewport(name = "data_asp", 
@@ -119,6 +121,10 @@ tmGetViewports <- function(vp, fontsize.title, fontsize.labels, fontsize.legend,
                        gp=gpar(fontsize=fsData),
                        just = c("centre", "centre"))
     upViewport()
+    vpCoorY <- ((convertY(vpDat$y, unitTo="inch", valueOnly=TRUE) + 
+                    convertHeight(vpDat$height, unitTo="inch", valueOnly=TRUE)/2)  + c(-1, 1) * (datHeight/2)) / height
+    vpCoorX <- ((convertX(vpDat$x, unitTo="inch", valueOnly=TRUE) + 
+                     convertWidth(vpDat$width, unitTo="inch", valueOnly=TRUE)/2)  + c(-1, 1) * (datWidth/2)) / width
     
-    list(vpDat=vpDat, vpDatAsp=vpDatAsp, vpDatTitle=vpDatTitle, vpLeg=vpLeg, vpLegTitle=vpLegTitle, datWidth=datWidth, datHeight=datHeight)
+    list(vpDat=vpDat, vpDatAsp=vpDatAsp, vpDatTitle=vpDatTitle, vpLeg=vpLeg, vpLegTitle=vpLegTitle, datWidth=datWidth, datHeight=datHeight, aspRatio=aspRatio, vpCoorX=vpCoorX, vpCoorY=vpCoorY)
 }

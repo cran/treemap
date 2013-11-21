@@ -7,11 +7,17 @@
     sortID = "-size", palette = NA,
     palette.HCL.options = NULL, range = NA,
     fontsize.title = 14, fontsize.labels = 11,
-    fontsize.legend = 12, lowerbound.cex.labels = 0.4,
-    inflate.labels = FALSE, bg.labels = NULL,
-    force.print.labels = FALSE, overlap.labels = 0.5,
-    position.legend = NULL, drop.unused.levels = TRUE,
-    aspRatio = NA, vp = NULL)
+    fontsize.legend = 12,
+    fontface.labels = c("bold", rep("plain", length(index) - 1)),
+    fontfamily.title = "sans", fontfamily.labels = "sans",
+    fontfamily.legend = "sans", border.col = "black",
+    border.lwds = c(length(index) + 1, (length(index) - 1):1),
+    lowerbound.cex.labels = 0.4, inflate.labels = FALSE,
+    bg.labels = NULL, force.print.labels = FALSE,
+    overlap.labels = 0.5,
+    align.labels = c("center", "center"), xmod.labels = 0,
+    ymod.labels = 0, position.legend = NULL,
+    drop.unused.levels = TRUE, aspRatio = NA, vp = NULL)
 }
 \arguments{
   \item{dtf}{a data.frame. Required.}
@@ -30,7 +36,9 @@
   \item{vColor}{name of the column that, in combination
   with \code{type}, determines the colors of the
   rectangles. The variable can be scaled by the addition of
-  "*<scale factor>" or "/<scale factor>".}
+  "*<scale factor>" or "/<scale factor>". Note: when
+  omitted for \code{"value"} treemaps, a contant value of 1
+  is taken.}
 
   \item{type}{type of the treemap, which determines how the
   rectangles are colored: \describe{
@@ -39,11 +47,17 @@
   hierarchical tree get different colors. For this type,
   \code{vColor} is not needed.} \item{\code{"value"}:}{the
   numeric \code{vColor}-column is directly mapped to a
-  color palette.} \item{\code{"comp"}:}{colors indicate
-  change of the \code{vSize}-column with respect to the
-  numeric \code{vColor}-column in percentages. Note: the
-  negative scale may be different from the positive scale
-  in order to compensate for the ratio distribution.}
+  color palette. This palette is diverging, so that values
+  of 0 are assigned to the mid color (white or yellow), and
+  negative and positive values are assigned to color based
+  on two different hues colors (by default reds for
+  negative and greens for positive values). For more
+  freedom, see \code{"manual"}.}
+  \item{\code{"comp"}:}{colors indicate change of the
+  \code{vSize}-column with respect to the numeric
+  \code{vColor}-column in percentages. Note: the negative
+  scale may be different from the positive scale in order
+  to compensate for the ratio distribution.}
   \item{\code{"dens"}:}{colors indicate density. This is
   analogous to a population density map where
   \code{vSize}-values are area sizes, \code{vColor}-values
@@ -55,7 +69,11 @@
   \item{\code{"categorical"}:}{\code{vColor} is a factor
   column that determines the color.}
   \item{\code{"color"}:}{\code{vColor} is a vector of
-  colors in the hexadecimal (#RRGGBB) format}}}
+  colors in the hexadecimal (#RRGGBB) format}
+  \item{\code{"manual"}:}{The numeric \code{vColor}-column
+  is directly mapped to a color palette. Both palette and
+  range should be provided. The palette is mapped linearly
+  to the range.}}}
 
   \item{title}{title of the treemap.}
 
@@ -108,9 +126,9 @@
   from \code{hue_start} to \code{hue_end} (default: TRUE)}
   \item{\code{hue_fraction}:}{number between 0 and 1 that
   determines the fraction of the hue circle that is used
-  for recursive color picking: if 0 then the full hue
+  for recursive color picking: if 1 then the full hue
   circle is used, which means that the hue of the colors of
-  lower-level nodes are spread maximally. If 1, then the
+  lower-level nodes are spread maximally. If 0, then the
   hue of the colors of lower-level nodes are identical of
   the hue of their parents. (default: .5)}
   \item{\code{chroma}:}{chroma value of colors of the
@@ -133,18 +151,45 @@
   When omitted, the range of actual values is used. This
   range is mapped to \code{palette}.}
 
-  \item{fontsize.title}{(maximum) font size of the title}
+  \item{fontsize.title}{font size of the title}
 
   \item{fontsize.labels}{font size(s) of the data labels,
-  which can be: \itemize{ \item one number, which specifies
-  the font size for all aggregation levels \item vector of
-  two numbers, which specific the font sizes for 1) the
-  highest and 2) the other aggregation levels \item vector
-  of three numbers, which specific the font sizes for 1)
-  the highest, 2) any in-between, and 3) the lowest
-  aggregation level.}}
+  which is either a single number that specifies the font
+  size for all aggregation levels, or a vector that
+  specifies the font size for each aggregation level. Use
+  value \code{0} to omit the labels for the corresponding
+  aggregation level.}
 
-  \item{fontsize.legend}{(maximum) font size of the legend}
+  \item{fontsize.legend}{font size for the legend}
+
+  \item{fontface.labels}{either a single value, or a vector
+  of values one for each aggregation level. Values can be
+  integers If an integer, following the R base graphics
+  standard: 1 = plain, 2 = bold, 3 = italic, 4 = bold
+  italic, or characters: \code{"plain"}, \code{"bold"},
+  \code{"italic"}, \code{"oblique"}, and
+  \code{"bold.italic"}.}
+
+  \item{fontfamily.title}{font family of the title.
+  Standard values are "serif", "sans", "mono", "symbol".
+  Mapping is device dependent.}
+
+  \item{fontfamily.labels}{font family of the labels in
+  each rectangle. Standard values are "serif", "sans",
+  "mono", "symbol". Mapping is device dependent.}
+
+  \item{fontfamily.legend}{font family of the legend.
+  Standard values are "serif", "sans", "mono", "symbol".
+  Mapping is device dependent.}
+
+  \item{border.col}{color of borders drawn around each
+  rectangle. Either one color for all rectangles or a
+  vector of colors, or one for each aggregation level}
+
+  \item{border.lwds}{thicknesses of border lines. Either
+  one number specifies the line thicknesses (widths) for
+  all rectangles or a vector of line thicknesses for each
+  aggregation level.}
 
   \item{lowerbound.cex.labels}{multiplier between 0 and 1
   that sets the lowerbound for the data label font sizes: 0
@@ -152,10 +197,11 @@
   labels if they fit (given \code{fontsize.labels}).}
 
   \item{inflate.labels}{logical that determines whether
-  data labels are inflated inside the rectangles. If TRUE,
-  \code{fontsize.labels} is does not determine the maximum
-  fontsize, but it does determine in combination with
-  \code{lowerbound.cex.labels} the minimum fontsize.}
+  data labels are inflated inside the rectangles. If
+  \code{TRUE}, \code{fontsize.labels} does not determine
+  the fontsize anymore, but it still determines the minimum
+  fontsize in combination with
+  \code{lowerbound.cex.labels}.}
 
   \item{bg.labels}{background color of high aggregation
   labels. Either a color, or a number between 0 and 255
@@ -179,6 +225,24 @@
   printed if other labels do not overlap with more than .5
   times their area size.}
 
+  \item{align.labels}{object that specifies the alignment
+  of the labels. Either a character vector of two values
+  specifying the horizontal alignment (\code{"left"},
+  \code{"center"}, or \code{"right"}) and the vertical
+  alignment (\code{"top"}, \code{"center"}, or
+  \code{"bottom"}), or a list of sush character vectors,
+  one for each aggregation level.}
+
+  \item{xmod.labels}{the horizontal position modification
+  of the labels in inches. Either a single value, or a
+  vector that specifies the modification for each
+  aggregation level.}
+
+  \item{ymod.labels}{the vertical position modification of
+  the labels in inches. Either a single value, or a vector
+  that specifies the modification for each aggregation
+  level.}
+
   \item{position.legend}{position of the legend:
   \code{"bottom"}, \code{"right"}, or \code{"none"}. For
   "categorical" and "index" treemaps, \code{"right"} is the
@@ -201,9 +265,16 @@
 \value{
   A list is silently returned: \item{tm}{a
   \code{data.frame} containing information about the
-  rectangles} \item{type}{argument type}
+  rectangles: indices, sizes, original color values,
+  derived color values, depth level, position (x0, y0, w,
+  h), and color.} \item{type}{argument type}
   \item{vSize}{argument vSize} \item{vColor}{argument
   vColor} \item{algorithm}{argument algorithm}
+  \item{vpCoorX}{x-coordinates of the treemap within the
+  whole plot} \item{vpCoorY}{y-coordinates of the treemap
+  within the whole plot} \item{aspRatio}{aspect ratio of
+  the treemap} \item{range}{range of the color values
+  scale}
 }
 \description{
   A treemap is a space-filling visualization of
@@ -249,101 +320,145 @@ treemap(business[business$NACE1=="C - Manufacturing",],
         vSize=c("employees"),
         type="index")
 
+# value treemap: colors are derived from a numeric variable given by vColor 
+# (when omited, all values are set to 1 as in the following example)
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        title.legend="number of NACE4 categories",
+        type="value")
+
 # comparisson treemaps: colors indicate change of vSize with respect to vColor
-treemap(business, 
-	   index=c("NACE1", "NACE2"), 
-	   vSize="employees", 
-	   vColor="employees.prev",
-	   type="comp")
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        vColor="employees.prev",
+        type="comp")
 
 # density treemaps: colors indicate density (like a population density map)
 treemap(business,
-	   index=c("NACE1", "NACE2"), 
-	   vSize="turnover",
-	   vColor="employees/1000",
-	   type="dens")
+        index=c("NACE1", "NACE2"),
+        vSize="turnover",
+        vColor="employees/1000",
+        type="dens")
+
+\dontrun{
+# depth treemap: show depth
+treemap(business,
+        index=c("NACE1", "NACE2", "NACE3"), 
+        vSize="turnover",
+        type="depth")
+}
 
 # categorical treemap: colors are determined by a categorical variable
-business <- transform(business, data.available = factor(!is.na(turnover)), 
-                      x = 1)
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-	   vSize="x", 
-	   vColor="data.available",
-	   type="categorical")
+business <- transform(business, data.available = factor(!is.na(turnover)), x = 1)
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="x",
+        vColor="data.available",
+        type="categorical")
+
+\dontrun{
+# color treemap
+business$color <- rainbow(nlevels(business$NACE2))[business$NACE2]
+treemap(business,
+        index=c("NACE1", "NACE2"), 
+        vSize="x",
+        vColor="color",
+        type="color")
+
+# manual
+business$color <- rainbow(nlevels(business$NACE2))[business$NACE2]
+treemap(business,
+        index=c("NACE1", "NACE2"), 
+        vSize="turnover",
+        vColor="employees",
+        type="manual",
+        palette=terrain.colors(10),
+        range=c(-50000, 500000))
+}
 
 #########################################
 ### graphical options: control fontsizes
 #########################################
 
 \dontrun{
-# draw labels at fixed fontsize 12 (if they fit)
+# draw labels of first index at fontsize 12 at the center, 
+# and labels of second index at fontsize 8 top left
 treemap(business, 
-	   index=c("NACE1", "NACE2"), 
-	   vSize="employees", 
-	   fontsize.labels=12, 
-	   lowerbound.cex.labels=1)
+        index=c("NACE1", "NACE2"), 
+        vSize="employees", 
+        fontsize.labels=c(12, 8), 
+        align.labels=list(c("center", "center"), c("left", "top")),
+        lowerbound.cex.labels=1)
+    
+    
+# draw all labels at fontsize 12 (only if they fit)
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        fontsize.labels=12,
+        lowerbound.cex.labels=1)
 
-# draw labels at fontsize (.6*12) to 12 (if they fit)
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       fontsize.labels=12, 
-	   lowerbound.cex.labels=.6)
+# draw all labels at fontsize 12, and if they don't fit, reduce to a minimum of .6*12
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        fontsize.labels=12,
+        lowerbound.cex.labels=.6)
 
 # draw all labels at maximal fontsize
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-	   lowerbound.cex.labels=0, 
-	   inflate.labels = TRUE)
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        lowerbound.cex.labels=0,
+        inflate.labels = TRUE)
 
 # draw all labels at fixed fontsize, even if they don't fit
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       fontsize.labels=10, 
-	   lowerbound.cex.labels=1, 
-	   force.print.labels=TRUE)
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        fontsize.labels=10,
+        lowerbound.cex.labels=1,
+        force.print.labels=TRUE)
 
 #########################################
 ### graphical options: color palettes
 #########################################
 
 ## for comp and value typed treemaps all diverging brewer palettes can be chosen
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       vColor="employees.prev",
-       type="comp",
-       palette="RdBu")
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        vColor="employees.prev",
+        type="comp",
+        palette="RdBu")
 
-## index treemaps, with palette="HCL":
+## draw warm-colored index treemap
 palette.HCL.options <- list(hue_start=270, hue_end=360+150)
 treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       type="index",
-       palette="HCL",
-       palette.HCL.options=palette.HCL.options)
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        type="index",
+        palette.HCL.options=palette.HCL.options)
 
 # terrain colors
 business$employees.growth <- business$employees - business$employees.prev
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       vColor="employees.growth", 
-	   type="value", 
-	   palette=terrain.colors(10))
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        vColor="employees.growth",
+        type="value",
+        palette=terrain.colors(10))
 
 # Brewer's Red-White-Grey palette reversed with predefined range
-treemap(business, 
-       index=c("NACE1", "NACE2"), 
-       vSize="employees", 
-       vColor="employees.growth", 
-	   type="value", 
-	   palette="-RdGy", 
-	   range=c(-30000,30000))
+treemap(business,
+        index=c("NACE1", "NACE2"),
+        vSize="employees",
+        vColor="employees.growth",
+        type="value",
+        palette="-RdGy",
+        range=c(-30000,30000))
 }
 }
 \references{

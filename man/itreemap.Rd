@@ -1,0 +1,48 @@
+\name{itreemap}
+\alias{itreemap}
+\title{Interactive user interface of treemap}
+\usage{
+  itreemap(dtf = NULL, index = NULL, vSize = NULL,
+    vColor = NULL, type = NULL, height = 700,
+    command.line.output = TRUE)
+}
+\arguments{
+  \item{dtf}{a data.frame (\code{\link{treemap}}) If not
+  provided, then the first data.frame in the global
+  workspace is loaded.}
+
+  \item{index}{index variables (up to four). See
+  \code{\link{treemap}}.}
+
+  \item{vSize}{name of the variable that determine the
+  rectangle sizes.}
+
+  \item{vColor}{name of the variable that determine the
+  rectangle colors. See \code{\link{treemap}}.}
+
+  \item{type}{treemap type. See \code{\link{treemap}}.}
+
+  \item{height}{height of the plotted treemap in pixels.
+  Tip: decrease this number if the treemap doesn't fit
+  conveniently.}
+
+  \item{command.line.output}{if \code{TRUE}, the command
+  line output of the generated treemaps are provided in the
+  console.}
+}
+\description{
+  This function is an interactive web-based user interface
+  for creating treemaps. Interaction is provided for the
+  four main input arguments of (\code{\link{treemap}})
+  besides the data.frame itself, namely \code{index},
+  \code{vSize}, \code{vColor} and \code{type}. Zooming in
+  and out is possible. Command line outputs are generated
+  in the console.
+}
+\examples{
+\dontrun{
+data(business)
+itreemap(business)
+}
+}
+

@@ -8,7 +8,7 @@
 # @param bold logical defining whe the text is bold
 # @param inflate.labels logical defining whether the textsize may exceed \code{cex=1}
 str2rect <-
-function(grb, fontcol, fill, bold, inflate.labels, cex_index) {
+function(grb, fontcol, fill, fontface, fontfamily, inflate.labels, cex_index, align.labels, xmod.labels, ymod.labels) {
 	# wrap text to 1-5 sentences
 	txtWraps <- lapply(grb$name, FUN=function(txt) {
 		txtWrap <- list(txt)
@@ -54,14 +54,40 @@ function(grb, fontcol, fill, bold, inflate.labels, cex_index) {
 	cex <- unlist(results[2,]) * cex_index
 	nlines <- unlist(results[3,])
 	
-	fontface <- ifelse(bold, "bold", "plain")
-	txtGrb <- textGrob(txt, x=grb$x+0.5*grb$width, y=grb$y+0.5*grb$height, gp=gpar(cex=cex, fontface=fontface, col=fontcol))
+	#fontface <- ifelse(bold, "bold", "plain")
+	#txtGrb <- textGrob(txt, x=grb$x+0.5*grb$width, y=grb$y+0.5*grb$height, gp=gpar(cex=cex, fontface=fontface, col=fontcol))
 	
-		
+
+	if (align.labels[1]%in%c("center", "centre")) {
+        x <- grb$x + 0.5*grb$width
+        xjust <- .5
+	} else if(align.labels[1]=="left") {
+	    x <- grb$x + unit(.25, "lines")
+	    xjust <- 0
+	} else if(align.labels[1]=="right") {
+        x <- grb$x + grb$width -  unit(.25, "lines")
+        xjust <- 1
+    }
+	if (align.labels[2]%in%c("center", "centre")) {
+	    y <- grb$y + 0.5*grb$height
+	    yjust <- .5
+	} else if(align.labels[2]=="top") {
+	    y <- grb$y + grb$height - unit(.25, "lines")
+	    yjust <- 1
+	} else if(align.labels[2]=="bottom") {
+	    y <- grb$y + unit(.25, "lines")
+	    yjust <- 0
+	}
+    
+    x <- x + unit(xmod.labels, "inch")
+	y <- y + unit(ymod.labels, "inch")
+	
+    txtGrb <- textGrob(txt, x=x, y=y, just=c(xjust, yjust), gp=gpar(cex=cex, fontface=fontface, fontfamily=fontfamily, col=fontcol))
+	
 	
 	
 	txtGrbW <- mapply(txt, cex, FUN=function(x,y, fontface){
-		convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"inches", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
+		convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface, fontfamily=fontfamily))),"inches", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
 		
 	
 	tooLarge <- (txtGrbW > inchesW)
@@ -73,11 +99,25 @@ function(grb, fontcol, fill, bold, inflate.labels, cex_index) {
 	# background rect, height slightly extended
 
 	bckH <- mapply(txt, txtGrb$gp$cex, nlines, FUN=function(x,y,z, fontface){
-		convertHeight(grobHeight(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE) * z/(z-0.25)}, fontface, USE.NAMES=FALSE)
+		convertHeight(grobHeight(textGrob(x, gp=gpar(cex=y, fontface=fontface, fontfamily=fontfamily))),"npc", valueOnly=TRUE) * z/(z-0.25)}, fontface, USE.NAMES=FALSE)
 	bckW <- mapply(txt, txtGrb$gp$cex, FUN=function(x,y, fontface){
-		convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface))),"npc", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
+		convertWidth(grobWidth(textGrob(x, gp=gpar(cex=y, fontface=fontface, fontfamily=fontfamily))),"npc", valueOnly=TRUE)}, fontface, USE.NAMES=FALSE)
 
-	bckGrb <- rectGrob(x=txtGrb$x, y=txtGrb$y, width=bckW, height=bckH, gp=gpar(fill=fill, col=NA))
+	rectx <- txtGrb$x
+	recty <- txtGrb$y
+	
+	if (align.labels[1]=="left") {
+	    rectx <- rectx + unit(0.5*bckW, "npc")
+	} else if(align.labels[1]=="right") {
+	    rectx <- rectx - unit(0.5*bckW, "npc")
+	}
+	if (align.labels[2]=="bottom") {
+	    recty <- recty + unit(0.5*bckH, "npc")
+	} else if(align.labels[2]=="top") {
+	    recty <- recty - unit(0.5*bckH, "npc")
+	}
+    
+    bckGrb <- rectGrob(x=rectx, y=recty, width=bckW, height=bckH, gp=gpar(fill=fill, col=NA))
 
 
 	

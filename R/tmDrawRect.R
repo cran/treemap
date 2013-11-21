@@ -1,4 +1,7 @@
-tmDrawRect <- function(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, force.print.labels, cex_indices, overlap.labels) {
+tmDrawRect <- function(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, 
+                       force.print.labels, cex_indices, overlap.labels, border.col, border.lwds, 
+                       fontface.labels, fontfamily.labels, 
+                       align.labels, xmod.labels, ymod.labels) {
     pushViewport(vps$vpDat, vps$vpDatAsp)
     
     
@@ -9,67 +12,89 @@ tmDrawRect <- function(datlist, vps, indexList, lowerbound.cex.labels, inflate.l
     }
     
     depth <- length(indexList)
-    
     if (depth==1) {
         whichFill <- rep(TRUE, nrow(datlist))
         recs_fill <- createRec(datlist, 
                                filled=TRUE, 
-                               label="normal", 
+                               label=cex_indices!=0, 
                                labellb=lowerbound.cex.labels, 
-                               lwd = 1,
+                               lwd = border.lwds,
                                inflate.labels=inflate.labels,
                                force.print.labels=force.print.labels,
-                               cex_index=cex_indices[1])
+                               cex_index=cex_indices,
+                               border.col=border.col,
+                               fontface.labels=fontface.labels,
+                               fontfamily.labels=fontfamily.labels,
+                               align.labels=align.labels[[1]], 
+                               xmod.labels=xmod.labels, 
+                               ymod.labels=ymod.labels)
         grid.draw(recs_fill$recs)
-        grid.draw(recs_fill$txt)
+        if (cex_indices!=0) grid.draw(recs_fill$txt)
     } else {
         whichBold <- datlist$l==1
-        lwds <- depth - datlist$l + 1
         whichFill <- datlist$l==depth
-        
+        #lwds2 <- lwds[ifelse(whichBold, 1, ifelse(whichFill, 3, 2))]
+
         whichNA <- is.na(datlist$n)
-        #browser()
         recs_fill_NA <- createRec(datlist[whichFill & !whichBold & whichNA,], 
                                   filled=TRUE, 
-                                  label="", 
-                                  lwd = lwds[whichFill & !whichBold & whichNA], 
+                                  label=FALSE, 
+                                  lwd = border.lwds[depth], 
                                   inflate.labels=inflate.labels,
                                   force.print.labels=force.print.labels, 
-                                  cex_index=cex_indices[3])
+                                  cex_index=cex_indices[depth], 
+                                  border.col=border.col[depth],
+                                  fontface.labels=fontface.labels[depth],
+                                  fontfamily.labels=fontfamily.labels)
         
         recs_fill_norm <- createRec(datlist[whichFill & !whichBold &!whichNA,], 
                                     filled=TRUE, 
-                                    label="normal", 
+                                    label=TRUE, 
                                     labellb=lowerbound.cex.labels, 
-                                    lwd = lwds[whichFill & !whichBold &!whichNA], 
+                                    lwd = border.lwds[depth], 
                                     inflate.labels=inflate.labels,
                                     force.print.labels=force.print.labels, 
-                                    cex_index=cex_indices[3])
-        
-        #browser()
+                                    cex_index=cex_indices[depth],
+                                    border.col=border.col[depth],
+                                    fontface.labels=fontface.labels[depth],
+                                    fontfamily.labels=fontfamily.labels,
+                                    align.labels=align.labels[[depth]], 
+                                    xmod.labels=xmod.labels[depth], 
+                                    ymod.labels=ymod.labels[depth])
         
         rng <- rev(sort(unique(datlist$l[!whichFill & !whichBold & !whichNA])))
         
         recs_trans_norm <- lapply(rng, function(r) createRec(datlist[!whichFill & !whichBold & !whichNA & datlist$l==r,], 
                                      filled=FALSE, 
-                                     label="normal",
+                                     label=TRUE,
                                      labellb=lowerbound.cex.labels, 
                                      bg.labels = bg.labels, 
-                                     lwd = lwds[!whichFill & !whichBold &
-                                                    !whichNA & datlist$l==r],
+                                     lwd = border.lwds[r],
                                      inflate.labels=inflate.labels,
                                      force.print.labels=force.print.labels, 
-                                     cex_index=cex_indices[2])) 
+                                     cex_index=cex_indices[r],
+                                     border.col=border.col[r],
+                                     fontface.labels=fontface.labels[r],
+                                     fontfamily.labels=fontfamily.labels,
+                                     align.labels=align.labels[[r]], 
+                                     xmod.labels=xmod.labels[r], 
+                                     ymod.labels=ymod.labels[r])) 
         
         recs_trans_bold <- createRec(datlist[!whichFill & whichBold,], 
                                      filled=FALSE, 
-                                     label="bold", 
+                                     label=TRUE, 
                                      labellb=lowerbound.cex.labels, 
                                      bg.labels = bg.labels, 
-                                     lwd = lwds[!whichFill & whichBold], 
+                                     lwd = border.lwds[1], 
                                      inflate.labels=inflate.labels,
                                      force.print.labels=force.print.labels, 
-                                     cex_index=cex_indices[1]) 
+                                     cex_index=cex_indices[1],
+                                     border.col=border.col[1],
+                                     fontface.labels=fontface.labels[1],
+                                     fontfamily.labels=fontfamily.labels,
+                                     align.labels=align.labels[[1]], 
+                                     xmod.labels=xmod.labels[1], 
+                                     ymod.labels=ymod.labels[1]) 
         if (overlap.labels < 1) {
             
             anyTransBold <- any(!whichFill & whichBold)
@@ -81,7 +106,7 @@ tmDrawRect <- function(datlist, vps, indexList, lowerbound.cex.labels, inflate.l
             }
             layers <- c(layers, list(recs_trans_bold$txtbg))
             
-            select <- lapply(layers, function(l)rep(TRUE, length(l$x$arg1)))
+            select <- lapply(layers, function(l)rep(TRUE, length(l$x)))
             for (i in length(layers):2) {
                 for (j in (i-1):1) {
                     cover <- overlap(layers[[j]], layers[[i]], 
@@ -106,4 +131,5 @@ tmDrawRect <- function(datlist, vps, indexList, lowerbound.cex.labels, inflate.l
         drawRecs(recs_trans_bold)
         
     }
+    upViewport(2)
 }

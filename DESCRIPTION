@@ -1,23 +1,25 @@
 Package: treemap
 Type: Package
 Title: Treemap visualization
-Version: 2.0.1
-Date: 2013-05-28
+Version: 2.1
+Date: 2013-11-21
 Author: Martijn Tennekes
 Maintainer: Martijn Tennekes <mtennekes@gmail.com>
 Description: A treemap is a space-filling visualization of hierarchical
-        structures. This package offers great flexibility to draw
-        treemaps.
+    structures. This package offers great flexibility to draw treemaps.
 License: GPL-3
 LazyLoad: yes
-Imports: colorspace, grid, RColorBrewer, data.table
+Imports: colorspace, data.table (>= 1.8.8), grid, gridBase, igraph,
+        RColorBrewer, shiny (>= 0.8.0)
 Collate: 'cat2col.R' 'comp2col.R' 'createRec.R' 'datasets.R'
         'dens2col.R' 'depth2col.R' 'drawLegend.R' 'index2col.R'
-        'linked2col.R' 'overlap.R' 'pivotSize.R' 'pkg.R' 'str2rect.R'
-        'squarified.R' 'tmAggregate.R' 'tmColorsLegend.R'
+        'itreemap.R' 'linked2col.R' 'overlap.R' 'pivotSize.R' 'pkg.R'
+        'str2rect.R' 'squarified.R' 'tmAggregate.R' 'tmColorsLegend.R'
         'tmDrawRect.R' 'tmGenerateRect.R' 'tmGetViewports.R' 'tmPlot.R'
-        'tmPrintTitles.R' 'treefunctions.R' 'treemap.R' 'value2col.R'
-Packaged: 2013-05-28 11:04:35 UTC; Vontijn
+        'tmPrintTitles.R' 'tmSetHCLoptions.R' 'treefunctions.R'
+        'treemap.R' 'value2col.R' 'tmLocate.R' 'treepalette.R'
+        'treegraph.R'
+Packaged: 2013-11-21 15:39:07 UTC; vt
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2013-05-28 13:14:37
+Date/Publication: 2013-11-21 18:15:21
