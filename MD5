@@ -1,6 +1,6 @@
-1e7d7642773995224e33dfe485736fb3 *DESCRIPTION
+8e1f9958f1822113963f99ffddc10be5 *DESCRIPTION
 8a90b210d8f48ba67ab871b2cd3a474f *NAMESPACE
-eec85f40eaf60a7c9cb662e08bf2ac1f *NEWS
+49494bee93559e9584c95207a50f111a *NEWS
 b394edb04368ed4087bf48b37aa297c9 *R/cat2col.R
 5cf77e2136293af70e16f6de645ad485 *R/comp2col.R
 5a78e1a1dd51bd997cbe186fa5cb33a7 *R/createRec.R
@@ -13,7 +13,7 @@ a28933e3f6df9b50d270ce60511ad3d6 *R/index2col.R
 f7f6cdf22bfda047e07a520495c177c0 *R/linked2col.R
 474bd8bab68fa9528e959f4a03d6a172 *R/overlap.R
 50ee301ff9168e594ea6d07604f1f9f1 *R/pivotSize.R
-47b6a1bcead39d2f180f1607d2883b93 *R/pkg.R
+4e98ebae59bd98253e1919de8d343aff *R/pkg.R
 0ae253085fbf6c5308c27acef0e2769a *R/squarified.R
 98df0033d720d37082bbb06dc8841364 *R/str2rect.R
 fbb3862529dcd266953a6527912a32bb *R/tmAggregate.R
@@ -26,8 +26,8 @@ a06851281cdd9999f9bbe661db9816a2 *R/tmDrawRect.R
 4df612c1e1480b2daa6757b7184e1b29 *R/tmPrintTitles.R
 cfdd2ed8e3fddff89b89f7033cc3c4f6 *R/tmSetHCLoptions.R
 cc71c9484438bb2911556972b88f8af2 *R/treefunctions.R
-d157be9a1990a3e63cf8ca39ab85b80b *R/treegraph.R
-bf258d0d523f8de660513758c8d223ed *R/treemap.R
+c1fd164dbdb15b09b38c9f5df5eb2926 *R/treegraph.R
+720714a82dd321e814d499cc460cf135 *R/treemap.R
 b37f432d5d4d5f0a7bcbfe26f09cb578 *R/treepalette.R
 894dd9ddacf5f44056861bcd00ea4d64 *R/value2col.R
 4cefaf3d0b728ead227e9347314fe9ab *data/GNI2010.rda
@@ -37,6 +37,6 @@ da94fdc0376a8d302ef3e583a2f0eef8 *man/business.Rd
 57cde82a50d46333f07034fe4e8e34b5 *man/itreemap.Rd
 9343c3e6c7ae68e8e4c18b3eb4d32fdc *man/tmPlot.Rd
 a7937f01a8e599102ff532fcfcc900e8 *man/treegraph.Rd
-a2a3b17caa8a283fffdf218fad2ed945 *man/treemap-package.Rd
+018b747cd7c1972094d92937569fdf32 *man/treemap-package.Rd
 95e9151df2cf96f4effab94801baced4 *man/treemap.Rd
 db1f45e2fd17a2d8bb57d324c1119522 *man/treepalette.Rd
