@@ -1,23 +1,20 @@
 \name{treemap}
 \alias{treemap}
-\title{Treemap}
+\title{Create a treemap}
 \usage{
-  treemap(dtf, index, vSize, vColor = NULL, type = "index",
-    title = NA, title.legend = NA, algorithm = "pivotSize",
-    sortID = "-size", palette = NA,
-    palette.HCL.options = NULL, range = NA,
-    fontsize.title = 14, fontsize.labels = 11,
-    fontsize.legend = 12,
-    fontface.labels = c("bold", rep("plain", length(index) - 1)),
-    fontfamily.title = "sans", fontfamily.labels = "sans",
-    fontfamily.legend = "sans", border.col = "black",
-    border.lwds = c(length(index) + 1, (length(index) - 1):1),
-    lowerbound.cex.labels = 0.4, inflate.labels = FALSE,
-    bg.labels = NULL, force.print.labels = FALSE,
-    overlap.labels = 0.5,
-    align.labels = c("center", "center"), xmod.labels = 0,
-    ymod.labels = 0, position.legend = NULL,
-    drop.unused.levels = TRUE, aspRatio = NA, vp = NULL)
+treemap(dtf, index, vSize, vColor = NULL, type = "index", title = NA,
+  title.legend = NA, algorithm = "pivotSize", sortID = "-size",
+  palette = NA, palette.HCL.options = NULL, range = NA,
+  fontsize.title = 14, fontsize.labels = 11, fontsize.legend = 12,
+  fontcolor.labels = NULL, fontface.labels = c("bold", rep("plain",
+  length(index) - 1)), fontfamily.title = "sans",
+  fontfamily.labels = "sans", fontfamily.legend = "sans",
+  border.col = "black", border.lwds = c(length(index) + 1, (length(index) -
+  1):1), lowerbound.cex.labels = 0.4, inflate.labels = FALSE,
+  bg.labels = NULL, force.print.labels = FALSE, overlap.labels = 0.5,
+  align.labels = c("center", "center"), xmod.labels = 0, ymod.labels = 0,
+  position.legend = NULL, drop.unused.levels = TRUE, aspRatio = NA,
+  vp = NULL)
 }
 \arguments{
   \item{dtf}{a data.frame. Required.}
@@ -105,25 +102,28 @@
   "-". For treemap types "value" and "comp", a diverging
   palette should be chosen (default="RdYlGn"), for type
   "dens" a sequential (default="OrRd"). The default value
-  for "depth" is "Set2".} \item{"HCL":}{Colors are derived
-  from the Hue-Chroma-Luminance color space model. This is
-  only applicable for qualitative palettes, which are
-  applied to the treemap types "index", "depth", and
-  "categorical". For "index" and "categorical" this is the
-  default value.}}}
+  for "depth" is "Set2".} \item{"HCL":}{Tree Colors are
+  color schemes derived from the Hue-Chroma-Luminance color
+  space model. This is only applicable for qualitative
+  palettes, which are applied to the treemap types "index",
+  "depth", and "categorical". For "index" and "categorical"
+  this is the default value.}}}
 
   \item{palette.HCL.options}{list of advanced options to
-  pick colors from the HCL space (when
+  obtain Tree Colors from the HCL space (when
   \code{palette="HCL"}). This list contains: \describe{
   \item{\code{hue_start}:}{number between 0 and 360 that
   determines the starting hue value (default: 30)}
   \item{\code{hue_end}:}{number between \code{hue_start}
   and \code{hue_start + 360} that determines the ending hue
-  value (default: 390)} \item{\code{hue_spread}:}{boolean
-  that determines whether the colors are spread such that
+  value (default: 390)} \item{\code{hue_perm}:}{boolean
+  that determines whether the colors are permuted such that
   adjacent levels get more distinguishable colors. If
   \code{FALSE}, then the colors are equally distributed
   from \code{hue_start} to \code{hue_end} (default: TRUE)}
+  \item{\code{hue_rev}:}{boolean that determines whether
+  the colors of even-numbered branched are reversed (to
+  increase discrimination among branches)}
   \item{\code{hue_fraction}:}{number between 0 and 1 that
   determines the fraction of the hue circle that is used
   for recursive color picking: if 1 then the full hue
@@ -144,7 +144,8 @@
   \item{\code{luminance_slope}:}{slope value for luminance
   of the non-first-level nodes (default: -10)}} For "depth"
   and "categorical" types, only the first two items are
-  used.}
+  used. Use \code{\link{treecolors}} to experiment with
+  these parameters.}
 
   \item{range}{range of values that determine the colors.
   Only applicable for types "value", "comp", and "dens".
@@ -161,6 +162,12 @@
   aggregation level.}
 
   \item{fontsize.legend}{font size for the legend}
+
+  \item{fontcolor.labels}{Specifies the label colors.
+  Either a single color value, or a vector of color values
+  one for each aggregation level. By default, white and
+  black colors are used, depending on the background
+  (\code{bg.labels}).}
 
   \item{fontface.labels}{either a single value, or a vector
   of values one for each aggregation level. Values can be
@@ -263,29 +270,28 @@
   or when placing a treemap in a custom grid based plot.}
 }
 \value{
-  A list is silently returned: \item{tm}{a
-  \code{data.frame} containing information about the
-  rectangles: indices, sizes, original color values,
-  derived color values, depth level, position (x0, y0, w,
-  h), and color.} \item{type}{argument type}
-  \item{vSize}{argument vSize} \item{vColor}{argument
-  vColor} \item{algorithm}{argument algorithm}
-  \item{vpCoorX}{x-coordinates of the treemap within the
-  whole plot} \item{vpCoorY}{y-coordinates of the treemap
-  within the whole plot} \item{aspRatio}{aspect ratio of
-  the treemap} \item{range}{range of the color values
-  scale}
+A list is silently returned: \item{tm}{a \code{data.frame}
+containing information about the rectangles: indices,
+sizes, original color values, derived color values, depth
+level, position (x0, y0, w, h), and color.}
+\item{type}{argument type} \item{vSize}{argument vSize}
+\item{vColor}{argument vColor} \item{algorithm}{argument
+algorithm} \item{vpCoorX}{x-coordinates of the treemap
+within the whole plot} \item{vpCoorY}{y-coordinates of the
+treemap within the whole plot} \item{aspRatio}{aspect ratio
+of the treemap} \item{range}{range of the color values
+scale}
 }
 \description{
-  A treemap is a space-filling visualization of
-  hierarchical structures. This function offers great
-  flexibility to draw treemaps. Required is a data.frame
-  (\code{dtf}) that contains one or more hierarchical index
-  columns given by \code{index}, a column that determines
-  the rectangle area sizes (\code{vSize}), and optionally a
-  column that determines the rectangle colors
-  (\code{vColor}). The way how rectangles are colored is
-  determined by the argument \code{type}.
+A treemap is a space-filling visualization of hierarchical
+structures. This function offers great flexibility to draw
+treemaps. Required is a data.frame (\code{dtf}) that
+contains one or more hierarchical index columns given by
+\code{index}, a column that determines the rectangle area
+sizes (\code{vSize}), and optionally a column that
+determines the rectangle colors (\code{vColor}). The way
+how rectangles are colored is determined by the argument
+\code{type}.
 }
 \examples{
 #########################################
@@ -462,15 +468,15 @@ treemap(business,
 }
 }
 \references{
-  Bederson, B., Shneiderman, B., Wattenberg, M. (2002)
-  Ordered and Quantum Treemaps: Making Effective Use of 2D
-  Space to Display Hierarchies. ACM Transactions on
-  Graphics, 21(4): 833-854.
+Bederson, B., Shneiderman, B., Wattenberg, M. (2002)
+Ordered and Quantum Treemaps: Making Effective Use of 2D
+Space to Display Hierarchies. ACM Transactions on Graphics,
+21(4): 833-854.
 
-  Bruls, D.M., C. Huizing, J.J. van Wijk. Squarified
-  Treemaps. In: W. de Leeuw, R. van Liere (eds.), Data
-  Visualization 2000, Proceedings of the joint Eurographics
-  and IEEE TCVG Symposium on Visualization, 2000, Springer,
-  Vienna, p. 33-42.
+Bruls, D.M., C. Huizing, J.J. van Wijk. Squarified
+Treemaps. In: W. de Leeuw, R. van Liere (eds.), Data
+Visualization 2000, Proceedings of the joint Eurographics
+and IEEE TCVG Symposium on Visualization, 2000, Springer,
+Vienna, p. 33-42.
 }
 

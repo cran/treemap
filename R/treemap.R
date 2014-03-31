@@ -1,4 +1,4 @@
-#' Treemap
+#' Create a treemap
 #'
 #' A treemap is a space-filling visualization of hierarchical structures. This function offers great flexibility to draw treemaps. Required is a data.frame (\code{dtf}) that contains one or more hierarchical index columns given by \code{index}, a column that determines the rectangle area sizes (\code{vSize}), and optionally a column that determines the rectangle colors (\code{vColor}). The way how rectangles are colored is determined by the argument \code{type}.
 #' 
@@ -24,21 +24,23 @@
 #' \describe{
 #'        \item{a color palette:}{i.e., a vector of hexadecimal colors (#RRGGBB)}
 #'        \item{a name of a Brewer palette:}{See \code{RColorBrewer::display.brewer.all()} for the options. The palette can be reversed by prefixing with a "-". For treemap types "value" and "comp", a diverging palette should be chosen (default="RdYlGn"), for type "dens" a sequential (default="OrRd"). The default value for "depth" is "Set2".}
-#'        \item{"HCL":}{Colors are derived from the Hue-Chroma-Luminance color space model. This is only applicable for qualitative palettes, which are applied to the treemap types "index", "depth", and "categorical". For "index" and "categorical" this is the default value.}}
-#' @param palette.HCL.options list of advanced options to pick colors from  the HCL space (when \code{palette="HCL"}). This list contains: 
+#'        \item{"HCL":}{Tree Colors are color schemes derived from the Hue-Chroma-Luminance color space model. This is only applicable for qualitative palettes, which are applied to the treemap types "index", "depth", and "categorical". For "index" and "categorical" this is the default value.}}
+#' @param palette.HCL.options list of advanced options to obtain Tree Colors from  the HCL space (when \code{palette="HCL"}). This list contains: 
 #' \describe{
 #'        \item{\code{hue_start}:}{number between 0 and 360 that determines the starting hue value (default: 30)}
 #'        \item{\code{hue_end}:}{number between \code{hue_start} and \code{hue_start + 360} that determines the ending hue value (default: 390)}
-#'        \item{\code{hue_spread}:}{boolean that determines whether the colors are spread such that adjacent levels get more distinguishable colors. If \code{FALSE}, then the colors are equally distributed from \code{hue_start} to \code{hue_end} (default: TRUE)}
+#'        \item{\code{hue_perm}:}{boolean that determines whether the colors are permuted such that adjacent levels get more distinguishable colors. If \code{FALSE}, then the colors are equally distributed from \code{hue_start} to \code{hue_end} (default: TRUE)}
+#'        \item{\code{hue_rev}:}{boolean that determines whether the colors of even-numbered branched are reversed (to increase discrimination among branches)}
 #'        \item{\code{hue_fraction}:}{number between 0 and 1 that determines the fraction of the hue circle that is used for recursive color picking: if 1 then the full hue circle is used, which means that the hue of the colors of lower-level nodes are spread maximally. If 0, then the hue of the colors of lower-level nodes are identical of the hue of their parents. (default: .5)}
 #'        \item{\code{chroma}:}{chroma value of colors of the first-level nodes, that are determined by the first index variable (default: 60)}
 #'        \item{\code{luminance}:}{luminance value of colors of the first-level nodes, i.e. determined by the first index variable (default: 70)}
 #'        \item{\code{chroma_slope}:}{slope value for chroma of the non-first-level nodes. The chroma values for the second-level nodes are \code{chroma+chroma_slope}, for the third-level nodes \code{chroma+2*chroma_slope}, etc. (default: 5)}
-#'        \item{\code{luminance_slope}:}{slope value for luminance of the non-first-level nodes (default: -10)}} For "depth" and "categorical" types, only the first two items are used.
+#'        \item{\code{luminance_slope}:}{slope value for luminance of the non-first-level nodes (default: -10)}} For "depth" and "categorical" types, only the first two items are used. Use \code{\link{treecolors}} to experiment with these parameters.
 #' @param range range of values that determine the colors. Only applicable for types "value", "comp", and "dens". When omitted, the range of actual values is used. This range is mapped to \code{palette}.
 #' @param fontsize.title font size of the title
 #' @param fontsize.labels font size(s) of the data labels, which is either a single number that specifies the font size for all aggregation levels, or a vector that specifies the font size for each aggregation level. Use value \code{0} to omit the labels for the corresponding aggregation level. 
 #' @param fontsize.legend font size for the legend
+#' @param fontcolor.labels Specifies the label colors. Either a single color value, or a vector of color values one for each aggregation level. By default, white and black colors are used, depending on the background (\code{bg.labels}).
 #' @param fontface.labels either a single value, or a vector of values one for each aggregation level. Values can be integers  If an integer, following the R base graphics standard: 1 = plain, 2 = bold, 3 = italic, 4 = bold italic, or characters: \code{"plain"}, \code{"bold"}, \code{"italic"}, \code{"oblique"}, and \code{"bold.italic"}.
 #' @param fontfamily.title font family of the title. Standard values are "serif", "sans", "mono", "symbol". Mapping is device dependent. 
 #' @param fontfamily.labels font family of the labels in each rectangle. Standard values are "serif", "sans", "mono", "symbol". Mapping is device dependent. 
@@ -94,6 +96,7 @@ treemap <-
              fontsize.title=14, 
              fontsize.labels=11, 
              fontsize.legend=12,
+             fontcolor.labels=NULL,
              fontface.labels=c("bold", rep("plain", length(index)-1)),
              fontfamily.title="sans",
              fontfamily.labels="sans",
@@ -311,6 +314,9 @@ treemap <-
             stop("Invalid fontsize.legend")
         
         
+        # fontcolor.labels
+        if (!missing(fontcolor.labels)) if (length(fontcolor.labels)!=depth) fontcolor.labels <- rep(fontcolor.labels, length.out=depth)
+
         # fontface.labels
         if (length(fontface.labels)!=depth) fontface.labels <- rep(fontface.labels, length.out=depth)
         
@@ -387,9 +393,8 @@ treemap <-
         ###########
         ## prepare data for aggregation
         ###########
-        
         if (is.data.table(dtf)) {
-            dtfDT <- copy(dtf[, c(index, vSize, vColor, sortID)])
+            dtfDT <- copy(dtf[, c(index, vSize, vColor, sortID), with=FALSE])
         } else {
             dtfDT <- as.data.table(dtf[, c(index, vSize, vColor, sortID)])
         }
@@ -402,7 +407,7 @@ treemap <-
         }
         
         indexList <- paste0("index", 1:depth)
-        setnames(dtfDT, old=names(dtfDT), new=c(indexList, "s", "c", "i"))
+        setnames(dtfDT, old=1:ncol(dtfDT), new=c(indexList, "s", "c", "i"))
         
         if (vColorX!=1) dtfDT[, c:=c/vColorX]
         ## cast non-factor index columns to factor
@@ -450,7 +455,7 @@ treemap <-
         datlist <- tmGenerateRect(datlist, vps, indexList, algorithm)
         tmDrawRect(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, 
                    force.print.labels, cex_indices, overlap.labels, border.col, border.lwds, 
-                   fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels)
+                   fontcolor.labels, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels)
         
         upViewport(0 + !is.null(vp))
         

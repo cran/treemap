@@ -1,13 +1,13 @@
 \name{tmPlot}
 \alias{tmPlot}
-\title{Treemap (deprecated)}
+\title{Create a treemap (deprecated)}
 \usage{
-  tmPlot(...)
+tmPlot(...)
 }
 \arguments{
   \item{...}{passed on to \code{\link{treemap}}}
 }
 \description{
-  This function is migrated to \code{\link{treemap}}.
+This function is migrated to \code{\link{treemap}}.
 }
 
