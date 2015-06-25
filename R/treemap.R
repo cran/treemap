@@ -20,6 +20,8 @@
 #' @param title.legend title of the legend.
 #' @param algorithm name of the used algorithm: \code{"squarified"} or \code{"pivotSize"}. The squarified treemap algorithm (Bruls et al., 2000) produces good aspect ratios, but ignores the sorting order of the rectangles (\code{sortID}). The ordered treemap, pivot-by-size, algorithm (Bederson et al., 2002) takes the sorting order (\code{sortID}) into account while aspect ratios are still acceptable.
 #' @param sortID name of the variable that determines the order in which the rectangles are placed from top left to bottom right. Only applicable when \code{algorithm=="pivotSize"}. Also the values "size" and "color" can be used, which refer to \code{vSize} and \code{vColor} respectively. To inverse the sorting order, use "-" in the prefix. By default, large rectangles are placed top left.
+#' @param mirror.x logical that determines whether the rectangles are mirrored horizontally
+#' @param mirror.y logical that determines whether the rectangles are mirrored vertically
 #' @param palette one of the following: 
 #' \describe{
 #'        \item{a color palette:}{i.e., a vector of hexadecimal colors (#RRGGBB)}
@@ -37,6 +39,7 @@
 #'        \item{\code{chroma_slope}:}{slope value for chroma of the non-first-level nodes. The chroma values for the second-level nodes are \code{chroma+chroma_slope}, for the third-level nodes \code{chroma+2*chroma_slope}, etc. (default: 5)}
 #'        \item{\code{luminance_slope}:}{slope value for luminance of the non-first-level nodes (default: -10)}} For "depth" and "categorical" types, only the first two items are used. Use \code{\link{treecolors}} to experiment with these parameters.
 #' @param range range of values that determine the colors. Only applicable for types "value", "comp", and "dens". When omitted, the range of actual values is used. This range is mapped to \code{palette}.
+#' @param n preferred number of categories by which numeric variables are discretized.
 #' @param fontsize.title font size of the title
 #' @param fontsize.labels font size(s) of the data labels, which is either a single number that specifies the font size for all aggregation levels, or a vector that specifies the font size for each aggregation level. Use value \code{0} to omit the labels for the corresponding aggregation level. 
 #' @param fontsize.legend font size for the legend
@@ -55,6 +58,7 @@
 #' @param align.labels object that specifies the alignment of the labels. Either a character vector of two values specifying the horizontal alignment (\code{"left"}, \code{"center"}, or \code{"right"}) and the vertical alignment (\code{"top"}, \code{"center"}, or \code{"bottom"}), or a list of sush character vectors, one for each aggregation level.
 #' @param xmod.labels the horizontal position modification of the labels in inches. Either a single value, or a vector that specifies the modification for each aggregation level.
 #' @param ymod.labels the vertical position modification of the labels in inches. Either a single value, or a vector that specifies the modification for each aggregation level.
+#' @param eval.labels should the text labels, i.e. the factor labels of the \code{index} variables, be evaluated as expressions? Useful for printing mathematical symbols or equations.
 #' @param position.legend position of the legend: \code{"bottom"}, \code{"right"}, or \code{"none"}. For "categorical" and "index" treemaps, \code{"right"} is the default value, for "index" treemap, \code{"none"}, and for the other types, \code{"bottom"}.
 #' @param drop.unused.levels logical that determines whether unused levels (if any) are shown in the legend. Applicable for "categorical" treemap type.
 #' @param aspRatio preferred aspect ratio of the main rectangle, defined by width/height. When set to \code{NA}, the available window size is used.
@@ -90,9 +94,12 @@ treemap <-
              title.legend=NA,
              algorithm="pivotSize",
              sortID="-size",
+             mirror.x=FALSE,
+             mirror.y=FALSE,
              palette=NA,
              palette.HCL.options=NULL,
              range=NA,
+             n=7,
              fontsize.title=14, 
              fontsize.labels=11, 
              fontsize.legend=12,
@@ -111,13 +118,14 @@ treemap <-
              align.labels = c("center", "center"),
              xmod.labels = 0,
              ymod.labels = 0,
+             eval.labels = FALSE,
              position.legend=NULL,
              drop.unused.levels = TRUE,
              aspRatio=NA,
              vp=NULL) {
         s <- NULL #for CMD check
         
-        vColor.temp <- i <- NULL
+        vColor.temp <- i <- w <- h <- NULL
         
         #require(data.table)
         #############
@@ -393,7 +401,9 @@ treemap <-
         ###########
         ## prepare data for aggregation
         ###########
-        if (is.data.table(dtf)) {
+        if (inherits(dtf, c("tbl", "tbl_df"))) {
+            dtfDT <- as.data.table(data.frame(dtf[, c(index, vSize, vColor, sortID)]))
+        } else if (is.data.table(dtf)) {
             dtfDT <- copy(dtf[, c(index, vSize, vColor, sortID), with=FALSE])
         } else {
             dtfDT <- as.data.table(dtf[, c(index, vSize, vColor, sortID)])
@@ -450,12 +460,15 @@ treemap <-
             datlist$colorvalue <- NA
         } else {
             attr(datlist, "range") <- 1:2
-            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend)
+            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend, n)
         }
         datlist <- tmGenerateRect(datlist, vps, indexList, algorithm)
+        if (mirror.x) datlist <- within(datlist, x0 <- 1 - x0 - w)
+        if (mirror.y) datlist <- within(datlist, y0 <- 1 - y0 - h)
+
         tmDrawRect(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, 
                    force.print.labels, cex_indices, overlap.labels, border.col, border.lwds, 
-                   fontcolor.labels, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels)
+                   fontcolor.labels, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels, eval.labels)
         
         upViewport(0 + !is.null(vp))
         
