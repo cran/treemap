@@ -1,6 +1,6 @@
 #' Interactive user interface for treemap
 #'
-#' This function is an interactive web-based user interface for creating treemaps. Interaction is provided for the four main input arguments of (\code{\link{treemap}}) besides the data.frame itself, namely \code{index}, \code{vSize}, \code{vColor} and \code{type}. Zooming in and out is possible. Command line outputs are generated in the console.
+#' This function is an interactive user interface for creating treemaps. Interaction is provided for the four main input arguments of (\code{\link{treemap}}) besides the data.frame itself, namely \code{index}, \code{vSize}, \code{vColor} and \code{type}. Zooming in and out is possible. Command line outputs are generated in the console.
 #' 
 #' @param dtf a data.frame (\code{\link{treemap}}) If not provided, then the first data.frame in the global workspace is loaded.
 #' @param index index variables (up to four). See \code{\link{treemap}}.
@@ -14,6 +14,7 @@
 #' data(business)
 #' itreemap(business)
 #' }
+#' @note This interface will no longer be maintained (except for small bugs), since there is a better interactive interface available: \url{https://github.com/timelyportfolio/d3treeR}.
 #' @import data.table
 #' @import grid
 #' @import gridBase
@@ -68,11 +69,11 @@ itreemap <- function(dtf=NULL, index=NULL, vSize=NULL, vColor=NULL, type=NULL, h
     
 
     if (missing(vColor)) {
-        if (typeName %in% c("value", "comp", "dens") && (!(vColor %in% dfnum[[dtfname]]))) stop("vColor is not numeric")
-        if (typeName == "categorical" && (!(vColor %in% dfcat[[dtfname]]))) stop("vColor is not categorical")
-    } else {
         if (typeName %in% c("value", "comp", "dens")) vColor <- dfnum[[dtfname]][1]
         if (typeName == "categorical") vColor <- dfcat[[dtfname]][1]
+    } else {
+        if (typeName %in% c("value", "comp", "dens") && (!(vColor %in% dfnum[[dtfname]]))) stop("vColor is not numeric")
+        if (typeName == "categorical" && (!(vColor %in% dfcat[[dtfname]]))) stop("vColor is not categorical")
     }
     if (typeName %in% c("index", "depth")) vColor <- "<not needed>"
     

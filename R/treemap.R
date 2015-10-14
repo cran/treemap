@@ -6,6 +6,7 @@
 #' @param index    vector of column names in \code{dtf} that specify the aggregation indices. It could contain only one column name, which results in a treemap without hierarchy. If multiple column names are provided, the first name is the highest aggregation level, the second name the second-highest aggregation level, and so on. Required. 
 #' @param vSize name of the column in \code{dtf} that specifies the sizes of the rectangles. Required.
 #' @param vColor name of the column that, in combination with \code{type}, determines the colors of the rectangles. The variable can be scaled by the addition of "*<scale factor>" or "/<scale factor>". Note: when omitted for \code{"value"} treemaps, a contant value of 1 is taken.
+#' @param stdErr name of the column that contains standard errors. These are not used for the treemaps, but only aggregated accordingly and returned as item of the output list.
 #' @param type type of the treemap, which determines how the rectangles are colored:
 #' \describe{
 #'    	\item{\code{"index"}:}{colors are determined by the \code{index} variables. Different branches in the hierarchical tree get different colors. For this type, \code{vColor} is not needed.}
@@ -16,6 +17,7 @@
 #'    	\item{\code{"categorical"}:}{\code{vColor} is a factor column that determines the color.}
 #'      \item{\code{"color"}:}{\code{vColor} is a vector of colors in the hexadecimal (#RRGGBB) format}
 #'      \item{\code{"manual"}:}{The numeric \code{vColor}-column is directly mapped to a color palette. Both palette and range should be provided. The palette is mapped linearly to the range.}}
+#' @param fun.aggregate aggregation function, only used in \code{"value"} treemaps. This function determines how values of the lowest aggregation level are aggregated. By default, it takes the \code{sum}. Other sensible functions are \code{mean} and \code{weighted.mean}. In the latter case, the weights are determined by the \code{vSize} variable. Other arguments can be passed on. For \code{weighted.mean}, it is possible to assign a variable name for its \code{w} argument.
 #' @param title title of the treemap.
 #' @param title.legend title of the legend.
 #' @param algorithm name of the used algorithm: \code{"squarified"} or \code{"pivotSize"}. The squarified treemap algorithm (Bruls et al., 2000) produces good aspect ratios, but ignores the sorting order of the rectangles (\code{sortID}). The ordered treemap, pivot-by-size, algorithm (Bederson et al., 2002) takes the sorting order (\code{sortID}) into account while aspect ratios are still acceptable.
@@ -38,7 +40,8 @@
 #'        \item{\code{luminance}:}{luminance value of colors of the first-level nodes, i.e. determined by the first index variable (default: 70)}
 #'        \item{\code{chroma_slope}:}{slope value for chroma of the non-first-level nodes. The chroma values for the second-level nodes are \code{chroma+chroma_slope}, for the third-level nodes \code{chroma+2*chroma_slope}, etc. (default: 5)}
 #'        \item{\code{luminance_slope}:}{slope value for luminance of the non-first-level nodes (default: -10)}} For "depth" and "categorical" types, only the first two items are used. Use \code{\link{treecolors}} to experiment with these parameters.
-#' @param range range of values that determine the colors. Only applicable for types "value", "comp", and "dens". When omitted, the range of actual values is used. This range is mapped to \code{palette}.
+#' @param range range of values (so vector of two) that correspond to the color legend. By default, the range of actual values, determined by \code{vColor}, is used. Only applicable for numeric types, i.e. "value", "comp", "dens", and "manual". Note that the range doesn't affect the colors in the treemap itself for "value" and "manual" types; this is controlled by \code{mapping}.
+#' @param mapping vector of three values that specifies the mapping of the actual values, determined by \code{vColor}, to \code{palette}. The three values are respectively the minimum value, the mid value, and the maximum value. The mid value is particularly useful for diverging color palettes, where it defined the middle, neutral, color which is typically white or yellow. The \code{mapping} should cover the \code{range}. By default, for "value" treemaps, it is \code{c(-max(abs(values)), 0, max(abs(values)))}, where values are the actual values defined by \code{vColor}. For "manual" treemaps, the default setting is \code{c(min(values), mean(range(values)), max(values))}. A vector of two can also be specified. In that case, the mid value will be the average of those.  Only applicable for "value" and "manual" type treemaps.
 #' @param n preferred number of categories by which numeric variables are discretized.
 #' @param fontsize.title font size of the title
 #' @param fontsize.labels font size(s) of the data labels, which is either a single number that specifies the font size for all aggregation levels, or a vector that specifies the font size for each aggregation level. Use value \code{0} to omit the labels for the corresponding aggregation level. 
@@ -63,11 +66,14 @@
 #' @param drop.unused.levels logical that determines whether unused levels (if any) are shown in the legend. Applicable for "categorical" treemap type.
 #' @param aspRatio preferred aspect ratio of the main rectangle, defined by width/height. When set to \code{NA}, the available window size is used.
 #' @param vp \code{\link[grid:viewport]{viewport}} to draw in. By default it is not specified, which means that a new plot is created. Useful when drawing small multiples, or when placing a treemap in a custom grid based plot.
+#' @param draw logical that determines whether to draw the treemap.
+#' @param ... arguments to be passed to other functions. Currently, only \code{fun.aggregate} takes optional arguments. 
 #' @return A list is silently returned:
 #'	\item{tm}{a \code{data.frame} containing information about the rectangles: indices, sizes, original color values, derived color values, depth level, position (x0, y0, w, h), and color.}
 #'  \item{type}{argument type}
 #'  \item{vSize}{argument vSize}
 #'  \item{vColor}{argument vColor}
+#'  \item{stdErr}{standard errors}
 #'  \item{algorithm}{argument algorithm}
 #'  \item{vpCoorX}{x-coordinates of the treemap within the whole plot}
 #'  \item{vpCoorY}{y-coordinates of the treemap within the whole plot}
@@ -83,13 +89,19 @@
 #' @import RColorBrewer
 #' @import grid
 #' @import colorspace
+#' @importFrom grDevices col2rgb colorRampPalette hcl rgb
+#' @importFrom graphics par
+#' @importFrom methods as
+#' @importFrom stats rlnorm rnorm rpois
 #' @export
 treemap <-
     function(dtf, 
              index, 
              vSize, 
              vColor=NULL, 
+             stdErr=NULL,
              type="index",
+             fun.aggregate="sum",
              title=NA,
              title.legend=NA,
              algorithm="pivotSize",
@@ -99,6 +111,7 @@ treemap <-
              palette=NA,
              palette.HCL.options=NULL,
              range=NA,
+             mapping=NA,
              n=7,
              fontsize.title=14, 
              fontsize.labels=11, 
@@ -122,7 +135,9 @@ treemap <-
              position.legend=NULL,
              drop.unused.levels = TRUE,
              aspRatio=NA,
-             vp=NULL) {
+             vp=NULL,
+             draw=TRUE,
+             ...) {
         s <- NULL #for CMD check
         
         vColor.temp <- i <- w <- h <- NULL
@@ -155,6 +170,17 @@ treemap <-
         if (!is.numeric(dtf[[vSize]]))
             stop(paste("Column(s) in vSize not numeric",sep=""))
         
+        #stdErr
+        if (!is.null(stdErr)) {
+            if (length(stdErr)!=1) stop("stdErr should be one column name")
+            if (!stdErr %in% names(dtf)) stop("stdErr is invalid column name")
+            if (!is.numeric(dtf[[stdErr]]))
+                stop(paste("Column(s) in stdErr not numeric",sep=""))
+        }
+        else {
+            stdErr <- vSize
+        }
+        
         # vColor
         vColorMplySplit <- function(vColor) {
             divided <- 0
@@ -186,6 +212,12 @@ treemap <-
         # type
         if (!type %in% c("value", "categorical", "comp", "dens", "index", "depth", "color", "manual")) 
             stop("Invalid type")
+        
+        # fun.aggregate
+        if (!is.function(match.fun(fun.aggregate)))
+            stop("fun.aggregate is not a function")
+        
+        if (type=="dens") fun.aggregate <- "weighted.mean"
         
         # title	
         if (!is.na(title[1]) && length(title) != 1) {
@@ -247,6 +279,7 @@ treemap <-
         
         if (sortID=="size") sortID <- vSize
         if (sortID=="color") sortID <- vColor
+        if (sortID=="se") sortID <- stdErr
         
         if (!(sortID %in% names(dtf)))
             stop("Incorrect sortID")
@@ -286,27 +319,36 @@ treemap <-
         }
         
         palette.HCL.options <- tmSetHCLoptions(palette.HCL.options)
-#         # palette.HCL.options
-#         palette.HCL.options.temp <- list(hue_start=30, hue_end=390, hue_spread=TRUE, hue_fraction=0.5, chroma=60, luminance=70, chroma_slope=5, luminance_slope=-10)
-#         if (!missing(palette.HCL.options)) {
-#             if (!is.list(palette.HCL.options) | !all(names(palette.HCL.options)%in%names(palette.HCL.options.temp))) stop("Incorrect palette.HCL.options")
-#             palette.HCL.options.temp[names(palette.HCL.options)] <- palette.HCL.options
-#         }
-#         palette.HCL.options <- palette.HCL.options.temp
+        #         # palette.HCL.options
+        #         palette.HCL.options.temp <- list(hue_start=30, hue_end=390, hue_spread=TRUE, hue_fraction=0.5, chroma=60, luminance=70, chroma_slope=5, luminance_slope=-10)
+        #         if (!missing(palette.HCL.options)) {
+        #             if (!is.list(palette.HCL.options) | !all(names(palette.HCL.options)%in%names(palette.HCL.options.temp))) stop("Incorrect palette.HCL.options")
+        #             palette.HCL.options.temp[names(palette.HCL.options)] <- palette.HCL.options
+        #         }
+        #         palette.HCL.options <- palette.HCL.options.temp
         
         # range
-        if (!any(is.na(range))) {
+        if (!all(is.na(range))) {
             if (length(range)!=2)
-                stop("length range is not 2")
+                stop("length range should be 2")
             if (!is.numeric(range))
                 stop("range is not numeric")
-        } else if (type=="manual") {
-            stop("For \"manual\" treemaps, a range should be provided.")
-        }
+        } else range <- c(NA, NA)
+        
+        # mapping
+        if (!all(is.na(mapping))) {
+            if (!length(mapping) %in% c(2,3))
+                stop("length range should be 2 or 3")
+            if (!is.numeric(mapping))
+                stop("range is not numeric")
+            if (length(mapping)==2) {
+                mapping <- c(mapping[1], mean(mapping), mapping[2])
+            }
+        } else mapping <- c(NA, NA, NA)
         
         # fontsize.title
         if (length(fontsize.title)!=1 || 
-                !is.numeric(fontsize.title))
+            !is.numeric(fontsize.title))
             stop("Invalid fontsize.title")
         if (title=="") fontsize.title <- 0
         
@@ -318,13 +360,13 @@ treemap <-
         
         # fontsize.legend
         if (length(fontsize.legend)!=1 || 
-                !is.numeric(fontsize.legend))
+            !is.numeric(fontsize.legend))
             stop("Invalid fontsize.legend")
         
         
         # fontcolor.labels
         if (!missing(fontcolor.labels)) if (length(fontcolor.labels)!=depth) fontcolor.labels <- rep(fontcolor.labels, length.out=depth)
-
+        
         # fontface.labels
         if (length(fontface.labels)!=depth) fontface.labels <- rep(fontface.labels, length.out=depth)
         
@@ -337,14 +379,14 @@ treemap <-
         
         # lowerbound.cex.labels
         if (length(lowerbound.cex.labels)!=1 ||
-                !is.numeric(lowerbound.cex.labels))
+            !is.numeric(lowerbound.cex.labels))
             stop("Invalid lowerbound.cex.labels")
         if (lowerbound.cex.labels < 0 || lowerbound.cex.labels > 1)
             stop("lowerbound.cex.labels not between 0 and 1")
         
         # inflate.labels
         if (length(inflate.labels)!=1 ||
-                class(inflate.labels) !="logical")
+            class(inflate.labels) !="logical")
             stop("Invalid inflate.labels")
         
         # bg.labels
@@ -361,20 +403,20 @@ treemap <-
         
         # force.print.labels
         if (length(force.print.labels)!=1 ||
-                class(force.print.labels) !="logical")
+            class(force.print.labels) !="logical")
             stop("Invalid force.print.labels")
         
         # overlap.labels
         if (length(overlap.labels)!=1 ||
-                !is.numeric(overlap.labels))
+            !is.numeric(overlap.labels))
             stop("Invalid overlap.labels")
         if (overlap.labels<0 || overlap.labels > 1) stop("overlap.labels should be between 0 and 1")
-
+        
         #align.labels
         if (!is.list(align.labels)) align.labels <- list(align.labels)
         if (length(align.labels) !=depth) align.labels <- rep(align.labels, length.out=depth)
         lapply(align.labels, function(al) if (!(al[1]%in% c("left", "center", "centre", "right") && 
-                                                        al[2]%in% c("top", "center", "centre", "bottom"))) stop("incorrect align.labels"))
+                                                al[2]%in% c("top", "center", "centre", "bottom"))) stop("incorrect align.labels"))
         
         #xmod.labels and ymod.labels
         if (length(xmod.labels)!=depth) xmod.labels <- rep(xmod.labels, length.out=depth)
@@ -390,23 +432,26 @@ treemap <-
         
         # drop.unused.levels
         if (length(drop.unused.levels)!=1 ||
-                class(drop.unused.levels) !="logical")
+            class(drop.unused.levels) !="logical")
             stop("Invalid drop.unused.levels")
-
+        
         # aspRatio
         if (length(aspRatio)!=1 || (!is.na(aspRatio[1]) && !is.numeric(aspRatio)))
             stop("Invalid aspRatio")
+        
+        args <- list(...)
+        args$na.rm <- TRUE
         
         
         ###########
         ## prepare data for aggregation
         ###########
-        if (inherits(dtf, c("tbl", "tbl_df"))) {
-            dtfDT <- as.data.table(data.frame(dtf[, c(index, vSize, vColor, sortID)]))
+        if (inherits(dtf, c("tbl_df"))) {
+            dtfDT <- as.data.table(data.frame(dtf[, c(index, vSize, vColor, sortID, stdErr)]))
         } else if (is.data.table(dtf)) {
-            dtfDT <- copy(dtf[, c(index, vSize, vColor, sortID), with=FALSE])
+            dtfDT <- copy(dtf[, c(index, vSize, vColor, sortID, stdErr), with=FALSE])
         } else {
-            dtfDT <- as.data.table(dtf[, c(index, vSize, vColor, sortID)])
+            dtfDT <- as.data.table(dtf[, c(index, vSize, vColor, sortID, stdErr)])
         }
         
         if (is.null(vColor)) {
@@ -417,9 +462,25 @@ treemap <-
         }
         
         indexList <- paste0("index", 1:depth)
-        setnames(dtfDT, old=1:ncol(dtfDT), new=c(indexList, "s", "c", "i"))
+        setnames(dtfDT, old=1:ncol(dtfDT), new=c(indexList, "s", "c", "i", "se"))
         
         if (vColorX!=1) dtfDT[, c:=c/vColorX]
+        
+        if (fun.aggregate=="weighted.mean") {
+            if ("w" %in% names(args)) {
+                if (is.character(args$w)) {
+                    dtfDT[, w:=eval(parse(text=args$w))]
+                } else {
+                    dtfDT[, w:=args$w]
+                }
+            } else {
+                dtfDT[, w:=s]
+            }
+        } else {
+            dtfDT[, w:=1]
+        }
+        
+        
         ## cast non-factor index columns to factor
         for (d in 1:depth) {
             if (is.numeric(dtfDT[[d]])) { 
@@ -445,49 +506,64 @@ treemap <-
             dtfDT[, i:=integer(nrow(dtfDT))]
         }
         
+        ## cast se to numeric
+        if (!is.null(stdErr) && !is.numeric(dtfDT[["se"]])) {
+            warning("stdErr must be a numeric variable")
+            dtfDT[, "se":=integer(dtfDT[["se"]])]
+        }
+        
         setkeyv(dtfDT, indexList)
+        
         
         ###########
         ## process treemap
         ###########
-        datlist <- tmAggregate(dtfDT, indexList, type, ascending, drop.unused.levels)
-        catLabels <- switch(type, categorical=levels(datlist$c), index=levels(datlist$index1), depth=index, NA)
+        datlist <- tmAggregate(dtfDT, indexList, type, ascending, drop.unused.levels, fun.aggregate, args)
+        catLabels <- switch(type, categorical=levels(datlist$c), index=levels(datlist$index1), depth=index, standErr=datlist$se, NA)
+        
+        if (!draw) position.legend <- "none"
         vps <- tmGetViewports(vp, fontsize.title, fontsize.labels, fontsize.legend,
                               position.legend, type, aspRatio, title.legend, catLabels)
-        tmPrintTitles(vps, title, title.legend, position.legend, fontfamily.title, fontfamily.legend)
+        if (draw) tmPrintTitles(vps, title, title.legend, position.legend, fontfamily.title, fontfamily.legend)
         if (type == "color") {
             datlist$color <- as.character(datlist$c)
             datlist$colorvalue <- NA
         } else {
             attr(datlist, "range") <- 1:2
-            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend, n)
+            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, mapping, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend, n)
         }
         datlist <- tmGenerateRect(datlist, vps, indexList, algorithm)
+        
         if (mirror.x) datlist <- within(datlist, x0 <- 1 - x0 - w)
         if (mirror.y) datlist <- within(datlist, y0 <- 1 - y0 - h)
-
-        tmDrawRect(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, 
-                   force.print.labels, cex_indices, overlap.labels, border.col, border.lwds, 
-                   fontcolor.labels, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels, eval.labels)
+        
+        if (draw) {
+            tmDrawRect(datlist, vps, indexList, lowerbound.cex.labels, inflate.labels, bg.labels, 
+                       force.print.labels, cex_indices, overlap.labels, border.col, border.lwds, 
+                       fontcolor.labels, fontface.labels, fontfamily.labels, align.labels, xmod.labels, ymod.labels, eval.labels)
+        }
         
         upViewport(0 + !is.null(vp))
         
         # return treemap info
-        tm <- datlist[, c(indexList, "s", "c", "colorvalue", "l", "x0", "y0", "w", "h", "color"), with=FALSE]
+        tm <- datlist[, c(indexList, "s", "c", "se", "colorvalue", "l", "x0", "y0", "w", "h", "color"), with=FALSE]
         
         # recover original color values from densities
         if (type=="dens") tm[,c:=c*s]
         
-        setnames(tm, c(index, "vSize", "vColor", "vColorValue", "level", "x0", "y0", "w", "h", "color"))
+        setnames(tm, c(index, "vSize", "vColor", "stdErr", "vColorValue", "level", "x0", "y0", "w", "h", "color"))
         
         tmSave <- list(tm = as.data.frame(tm),
                        type = type,
                        vSize = vSize,
                        vColor = ifelse(vColor=="vColor.temp", NA, vColor),
+                       stdErr = stdErr,
                        algorithm = algorithm,
                        vpCoorX = vps$vpCoorX,
                        vpCoorY = vps$vpCoorY,
                        aspRatio = vps$aspRatio,
-                       range = range)
+                       range = range,
+                       mapping = mapping,
+                       draw = draw)
         invisible(tmSave)
     }

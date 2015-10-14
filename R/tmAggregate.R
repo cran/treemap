@@ -1,14 +1,14 @@
-tmAggregate <- function(dtfDT, indexList, type, ascending, drop.unused.levels) {
+tmAggregate <- function(dtfDT, indexList, type, ascending, drop.unused.levels, fun.aggregate, args) {
     l <- s <- i <- k <- n <- NULL
     
     depth <- length(indexList)
     dats <- list()
     for (d in 1:depth) {
-        datd <- tmAggregateStep(dtfDT, indexList[1:d])
+        datd <- tmAggregateStep(dtfDT, indexList[1:d], fun.aggregate, args)
         if (d < depth) {
             indexPlus <- indexList[(d+1):depth]
             datd[, get("indexPlus"):=lapply(indexPlus, function(x)factor(NA, levels=levels(dtfDT[[x]])))]
-            setcolorder(datd, c(indexList, "s", "c", "i"))
+            setcolorder(datd, c(indexList, "s", "c", "i", "se"))
         }
         datd[, l:=d]
         
@@ -28,7 +28,7 @@ tmAggregate <- function(dtfDT, indexList, type, ascending, drop.unused.levels) {
     
     
     if (type=="dens") {
-        datlist[, c:=c/s]
+        # datlist[, c:=c/s]
         datlist[is.nan(datlist$c), c:=0]
     }
     if (!ascending) {
@@ -47,12 +47,15 @@ tmAggregate <- function(dtfDT, indexList, type, ascending, drop.unused.levels) {
 }
 
 
-tmAggregateStep <- function(dtfDT, indexList) {
-    .SD <- s <- i <- NULL
+tmAggregateStep <- function(dtfDT, indexList, fun.aggregate, args) {
+    .SD <- s <- i <- se <- w <- NULL
+
+    
+    fun <- match.fun(fun.aggregate)
     
     isCat <- !is.numeric(dtfDT$c)
     
-    ## aggregate numeric variable
+    ## aggregate numeric or categorical variable
     fn <- function(x) {
         if (is.numeric(x)) {
             sum(x, na.rm=TRUE)
@@ -60,7 +63,20 @@ tmAggregateStep <- function(dtfDT, indexList) {
             which.max(table(x))
         }
     }
-    dat <- dtfDT[ , lapply(.SD[, list(s, c, i)], fn), by=indexList]
+    
+    if (fun.aggregate=="weighted.mean") {
+        if (isCat) {
+            dat <- dtfDT[ , list(s=fn(s), c=fn(c), i=fn(i), se=do.call("fun", c(list(se, w), args))), by=indexList]
+        } else {
+            dat <- dtfDT[ , list(s=fn(s), c=do.call("fun", c(list(c, w), args)), i=fn(i), se=do.call("fun", c(list(se, w), args))), by=indexList]
+        }
+    } else {
+        if (isCat) {
+            dat <- dtfDT[ , list(s=fn(s), c=fn(c), i=fn(i), se=do.call("fun", c(list(se), args))), by=indexList]
+        } else {
+            dat <- dtfDT[ , list(s=fn(s), c=do.call("fun", c(list(c), args)), i=fn(i), se=do.call("fun", c(list(se), args))), by=indexList]
+        }
+    }
     
     ## aggregate categorical variables: for each aggregate, get the mode
     if (isCat) {
