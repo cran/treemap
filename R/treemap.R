@@ -255,16 +255,16 @@ treemap <-
         }
         
         if (is.na(title.legend[1])) {	
-            options(warn=-1) 
-            if (!is.null(vColor)) {
-                if (type=="dens") 
-                    title.legend <- formatColorTitle(var=vColor, var2=vSize, 
-                                                     var2X=vColorX, div=vColorDiv)
-                else
-                    title.legend <- formatColorTitle(var=vColor, varX=vColorX, 
-                                                     div=vColorDiv)
-            } else title.legend <- ""
-            options(warn=0) 
+            suppressWarnings({
+                if (!is.null(vColor)) {
+                    if (type=="dens") 
+                        title.legend <- formatColorTitle(var=vColor, var2=vSize, 
+                                                         var2X=vColorX, div=vColorDiv)
+                    else
+                        title.legend <- formatColorTitle(var=vColor, varX=vColorX, 
+                                                         div=vColorDiv)
+                } else title.legend <- ""
+            })
         }
         
         # algorithm
@@ -442,7 +442,6 @@ treemap <-
         args <- list(...)
         args$na.rm <- TRUE
         
-        
         ###########
         ## prepare data for aggregation
         ###########
@@ -458,7 +457,7 @@ treemap <-
             vColor <- "vColor.temp"
             vColorX <- 1
             dtfDT[, vColor.temp:=1]
-            setcolorder(dtfDT, c(1:(ncol(dtfDT)-2), ncol(dtfDT), ncol(dtfDT)-1))
+            setcolorder(dtfDT, c(1:(ncol(dtfDT)-3), ncol(dtfDT), ncol(dtfDT)-2, ncol(dtfDT)-1))
         }
         
         indexList <- paste0("index", 1:depth)
