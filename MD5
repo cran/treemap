@@ -1,11 +1,11 @@
-5d3e4f08bf04a010c3a1801c29ad9b01 *DESCRIPTION
+309c213b3118cd18000eb458d62d5437 *DESCRIPTION
 0b85e81c9c745d5baceb6fcf00738148 *NAMESPACE
-e14359996b4512796d3885b460aa9b55 *NEWS
+331af59359b01d2e5b6e0c9c9f10f4dc *NEWS
 b394edb04368ed4087bf48b37aa297c9 *R/cat2col.R
 34e519ff35aa44bb1b348a88fe11afd4 *R/comp2col.R
 77a031c6fe5478d96f6502891290f820 *R/createRec.R
 01c83de8c5783ae6d4a48e167faad10a *R/datasets.R
-3b28e5e250f22b2368b99d1880169a5d *R/dens2col.R
+44e498c0049f1f6811626e73dc1f0228 *R/dens2col.R
 e5ca928597fd1c3bd1372e23152a05cd *R/depth2col.R
 bea365a434ab09353d103e0b2639722a *R/drawLegend.R
 a28933e3f6df9b50d270ce60511ad3d6 *R/index2col.R
@@ -18,7 +18,7 @@ f7f6cdf22bfda047e07a520495c177c0 *R/linked2col.R
 0ae253085fbf6c5308c27acef0e2769a *R/squarified.R
 4a345d77cea06c60d772051664726765 *R/str2rect.R
 f0d187f145c2390c8716867b14940070 *R/tmAggregate.R
-63c315ef1a1febcf0ced2f18bbd6da6d *R/tmColorsLegend.R
+70eb69a7e6bf2009100930437b28fc2d *R/tmColorsLegend.R
 fd33e76c4e9da301ef35f244e6e5bb6b *R/tmDrawRect.R
 259c349f75709887782f987c9e9e738e *R/tmGenerateRect.R
 8f23aa65c33aff3625b47997afecd744 *R/tmGetViewports.R
@@ -29,10 +29,10 @@ c24459fb639adcf93abfc16b20ac3fca *R/tmPlot.R
 97bf998e18ffda08f4430c679c836b82 *R/treecolors.R
 2686d0e9a7a0da51626750611ddc5a84 *R/treefunctions.R
 e5d7395f52509fd3b1cb39265290ede3 *R/treegraph.R
-c7ef8887f69a975fe3458ed5270fac7d *R/treemap.R
+8cb3d5051c70202af06b8a5ba12d0fc9 *R/treemap.R
 87624169f71f3bb63ca220751ea71074 *R/treepalette.R
-d5d84c4ff00ae70168ceb1a2f7285e18 *R/value2col.R
-c4651bd33f3558b424f2a314ed13b48b *build/vignette.rds
+c36751d33ede7a05020da389747b4e53 *R/value2col.R
+38f0f72b18046f48cfc4d26eac5e3557 *build/vignette.rds
 e2f63047168cee285597ddd66e02e8d0 *data/GNI2014.rda
 e114b28e04deefc9775778b88d830062 *data/business.rda
 97cb2517c2fac4c5b03711950f61fd24 *inst/doc/treemap-color_mapping.R
@@ -46,6 +46,6 @@ bc9ce2bfd44e0e621d7b20937adedde6 *man/tmPlot.Rd
 14cd087c45354ed345b63369cf5c0f7a *man/treecolors.Rd
 2460f79fff74396998910b2f575029cb *man/treegraph.Rd
 879f3e96da163d9a9c653dc886d42cf0 *man/treemap-package.Rd
-43993b57f10251725b46e2cf0052be2d *man/treemap.Rd
+180470fc9682c92464f64209a1904272 *man/treemap.Rd
 b87f6bb092d3168937171c48032208b1 *man/treepalette.Rd
 5a1b9a4553bdff2e82b21b8290908c4d *vignettes/treemap-color_mapping.Rmd
