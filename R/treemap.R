@@ -43,6 +43,9 @@
 #' @param range range of values (so vector of two) that correspond to the color legend. By default, the range of actual values, determined by \code{vColor}, is used. Only applicable for numeric types, i.e. "value", "comp", "dens", and "manual". Note that the range doesn't affect the colors in the treemap itself for "value" and "manual" types; this is controlled by \code{mapping}.
 #' @param mapping vector of three values that specifies the mapping of the actual values, determined by \code{vColor}, to \code{palette}. The three values are respectively the minimum value, the mid value, and the maximum value. The mid value is particularly useful for diverging color palettes, where it defined the middle, neutral, color which is typically white or yellow. The \code{mapping} should cover the \code{range}. By default, for "value" treemaps, it is \code{c(-max(abs(values)), 0, max(abs(values)))}, where values are the actual values defined by \code{vColor}. For "manual" treemaps, the default setting is \code{c(min(values), mean(range(values)), max(values))}. A vector of two can also be specified. In that case, the mid value will be the average of those.  Only applicable for "value" and "manual" type treemaps.
 #' @param n preferred number of categories by which numeric variables are discretized.
+#' @param na.rm ignore missing vlues for the vSize variable (by default TRUE)
+#' @param na.color color for missing values for the vColor variable
+#' @param na.text legend label for missing values for the vColor variable
 #' @param fontsize.title font size of the title
 #' @param fontsize.labels font size(s) of the data labels, which is either a single number that specifies the font size for all aggregation levels, or a vector that specifies the font size for each aggregation level. Use value \code{0} to omit the labels for the corresponding aggregation level. 
 #' @param fontsize.legend font size for the legend
@@ -59,10 +62,11 @@
 #' @param force.print.labels logical that determines whether data labels are being forced to be printed if they don't fit.
 #' @param overlap.labels number between 0 and 1 that determines the tolerance of the overlap between labels. 0 means that labels of lower levels are not printed if higher level labels overlap, 1 means that labels are always printed. In-between values, for instance the default value .5, means that lower level labels are printed if other labels do not overlap with more than .5 times their area size.
 #' @param align.labels object that specifies the alignment of the labels. Either a character vector of two values specifying the horizontal alignment (\code{"left"}, \code{"center"}, or \code{"right"}) and the vertical alignment (\code{"top"}, \code{"center"}, or \code{"bottom"}), or a list of sush character vectors, one for each aggregation level.
-#' @param xmod.labels the horizontal position modification of the labels in inches. Either a single value, or a vector that specifies the modification for each aggregation level.
-#' @param ymod.labels the vertical position modification of the labels in inches. Either a single value, or a vector that specifies the modification for each aggregation level.
+#' @param xmod.labels the horizontal position modification of the labels in inches. Options: a single value, a vector or a list that specifies the modification for each aggregation level. If a list is provided, each list item consists of a single value or a named vector that specify the modification per label.
+#' @param ymod.labels the vertical position modification of the labels in inches. Options: a single value, a vector or a list that specifies the modification for each aggregation level. If a list is provided, each list item consists of a single value or a named vector that specify the modification per label.
 #' @param eval.labels should the text labels, i.e. the factor labels of the \code{index} variables, be evaluated as expressions? Useful for printing mathematical symbols or equations.
 #' @param position.legend position of the legend: \code{"bottom"}, \code{"right"}, or \code{"none"}. For "categorical" and "index" treemaps, \code{"right"} is the default value, for "index" treemap, \code{"none"}, and for the other types, \code{"bottom"}.
+#' @param reverse.legend should the legend be reversed?
 #' @param format.legend a list of additional arguments for the formatting of numbers in the legend to pass to \code{format()}; only applies if \code{type} is \code{"value"}, \code{"dens"} or \code{"manual"}.
 #' @param drop.unused.levels logical that determines whether unused levels (if any) are shown in the legend. Applicable for "categorical" treemap type.
 #' @param aspRatio preferred aspect ratio of the main rectangle, defined by width/height. When set to \code{NA}, the available window size is used.
@@ -114,6 +118,9 @@ treemap <-
              range=NA,
              mapping=NA,
              n=7,
+             na.rm = TRUE,
+             na.color = "#DDDDDD",
+             na.text = "Missing",
              fontsize.title=14, 
              fontsize.labels=11, 
              fontsize.legend=12,
@@ -134,6 +141,7 @@ treemap <-
              ymod.labels = 0,
              eval.labels = FALSE,
              position.legend=NULL,
+             reverse.legend=FALSE,
              format.legend=NULL,
              drop.unused.levels = TRUE,
              aspRatio=NA,
@@ -315,8 +323,9 @@ treemap <-
                 if (palette[1]=="HCL" && !(type %in% c("depth", "index", "categorical"))) {
                     stop("HCL palette only applicable for treemap types \"depth\", \"index\" and \"categorical\".")
                 }
-                if (palette[1]!="HCL") if (class(try(col2rgb(palette), silent=TRUE))=="try-error") 
+                if (palette[1]!="HCL" & inherits(try(col2rgb(palette), silent=TRUE), "try-error")) {
                     stop("color palette is not correct")
+                }
             }
         }
         
@@ -358,7 +367,8 @@ treemap <-
         if (!is.numeric(fontsize.labels))
             stop("Invalid fontsize.labels")
         fontsize.labels <- rep(fontsize.labels, length.out=depth)
-        cex_indices <- fontsize.labels / max(min(fontsize.labels), 1)
+        #cex_indices <- fontsize.labels / max(min(fontsize.labels), 1)
+        cex_indices <- fontsize.labels / 12 #max(fontsize.labels)
         
         # fontsize.legend
         if (length(fontsize.legend)!=1 || 
@@ -421,6 +431,9 @@ treemap <-
                                                 al[2]%in% c("top", "center", "centre", "bottom"))) stop("incorrect align.labels"))
         
         #xmod.labels and ymod.labels
+        if (is.list(xmod.labels)) xmod.labels <- as.list(xmod.labels)
+        if (is.list(ymod.labels)) ymod.labels <- as.list(ymod.labels)
+        
         if (length(xmod.labels)!=depth) xmod.labels <- rep(xmod.labels, length.out=depth)
         if (length(ymod.labels)!=depth) ymod.labels <- rep(ymod.labels, length.out=depth)
         
@@ -442,7 +455,7 @@ treemap <-
             stop("Invalid aspRatio")
         
         args <- list(...)
-        args$na.rm <- TRUE
+        args$na.rm <- na.rm
         
         ###########
         ## prepare data for aggregation
@@ -496,8 +509,7 @@ treemap <-
         
         ## cast character color columns to factor
         if (is.character(dtfDT[["c"]])) {
-            fact <- factor(dtfDT[["c"]])
-            dtfDT[, "c":=fact, with=FALSE] 
+            dtfDT[, c:=factor(c)]
         }
         
         
@@ -531,7 +543,7 @@ treemap <-
             datlist$colorvalue <- NA
         } else {
             attr(datlist, "range") <- 1:2
-            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, mapping, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend, n, format.legend)
+            datlist <- tmColorsLegend(datlist, vps, position.legend, type, palette, range, mapping, indexNames=index, palette.HCL.options=palette.HCL.options, border.col, fontfamily.legend, n, na.color, na.text, format.legend, reverse.legend)
         }
         datlist <- tmGenerateRect(datlist, vps, indexList, algorithm)
         

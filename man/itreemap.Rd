@@ -4,8 +4,15 @@
 \alias{itreemap}
 \title{Interactive user interface for treemap}
 \usage{
-itreemap(dtf = NULL, index = NULL, vSize = NULL, vColor = NULL,
-  type = NULL, height = 700, command.line.output = TRUE)
+itreemap(
+  dtf = NULL,
+  index = NULL,
+  vSize = NULL,
+  vColor = NULL,
+  type = NULL,
+  height = 700,
+  command.line.output = TRUE
+)
 }
 \arguments{
 \item{dtf}{a data.frame (\code{\link{treemap}}) If not provided, then the first data.frame in the global workspace is loaded.}
@@ -26,7 +33,7 @@ itreemap(dtf = NULL, index = NULL, vSize = NULL, vColor = NULL,
 This function is an interactive user interface for creating treemaps. Interaction is provided for the four main input arguments of (\code{\link{treemap}}) besides the data.frame itself, namely \code{index}, \code{vSize}, \code{vColor} and \code{type}. Zooming in and out is possible. Command line outputs are generated in the console.
 }
 \note{
-This interface will no longer be maintained (except for small bugs), since there is a better interactive interface available: \url{https://github.com/timelyportfolio/d3treeR}.
+This interface will no longer be maintained (except for small bugs), since there is a better interactive interface available: \url{https://github.com/d3treeR/d3treeR}.
 }
 \examples{
 \dontrun{
@@ -34,4 +41,3 @@ data(business)
 itreemap(business)
 }
 }
-
